@@ -30,11 +30,15 @@ if os.path.exists(BASE_DIR):
 app = Flask(__name__, template_folder=TEMPLATE_DIR)
 
 # Read Supabase credentials from os.environ (Vercel injects these)
-SUPABASE_URL = os.environ.get("https://qimsoxokcryekmlkhphi.supabase.co")
-SUPABASE_KEY = os.environ.get("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpbXNveG9rY3J5ZWttbGtocGhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNTUwMjgsImV4cCI6MjA5MzgzMTAyOH0.POOlpFOS5MGvVjyeIrLz5ja5gEKgd4vxHPTqdfUBf8A")
+# First try env vars, then fall back to hardcoded values for testing
+SUPABASE_URL = os.environ.get("SUPABASE_URL") or "https://qimsoxokcryekmlkhphi.supabase.co"
+# NOTE: Using anon key here - if inserts fail due to RLS, switch to service_role key
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpbXNveG9rY3J5ZWttbGtocGhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNTUwMjgsImV4cCI6MjA5MzgzMTAyOH0.POOlpFOS5MGvVjyeIrLz5ja5gEKgd4vxHPTqdfUBf8A"
 
 print(f"[INIT] SUPABASE_URL present: {bool(SUPABASE_URL)}", flush=True)
 print(f"[INIT] SUPABASE_KEY present: {bool(SUPABASE_KEY)}", flush=True)
+print(f"[INIT] SUPABASE_URL length: {len(SUPABASE_URL) if SUPABASE_URL else 0}", flush=True)
+print(f"[INIT] SUPABASE_KEY length: {len(SUPABASE_KEY) if SUPABASE_KEY else 0}", flush=True)
 
 supabase = None
 if SUPABASE_URL and SUPABASE_KEY:
