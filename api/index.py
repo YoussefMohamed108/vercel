@@ -3,17 +3,14 @@ import sys
 import traceback
 from flask import Flask, request, jsonify, render_template
 from supabase import create_client
-from dotenv import load_dotenv
 
 # =========================
-# INIT
+# INIT - NO load_dotenv() on Vercel!
 # =========================
 
-load_dotenv()
+# Vercel injects env vars directly into os.environ at runtime
+# DO NOT use python-dotenv/load_dotenv() on Vercel - it doesn't work!
 
-# Vercel serverless runtime runs from /var/task/
-# api/index.py is at /var/task/api/index.py
-# templates should be at /var/task/templates/
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
 
@@ -27,15 +24,14 @@ print(f"[INIT] BASE_DIR: {BASE_DIR}", flush=True)
 print(f"[INIT] TEMPLATE_DIR: {TEMPLATE_DIR}", flush=True)
 print(f"[INIT] TEMPLATE_DIR exists: {os.path.exists(TEMPLATE_DIR)}", flush=True)
 
-# List files in BASE_DIR for debugging
 if os.path.exists(BASE_DIR):
     print(f"[INIT] Files in BASE_DIR: {os.listdir(BASE_DIR)}", flush=True)
 
-# Create Flask app with explicit template folder
 app = Flask(__name__, template_folder=TEMPLATE_DIR)
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+# Read Supabase credentials from os.environ (Vercel injects these)
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
 print(f"[INIT] SUPABASE_URL present: {bool(SUPABASE_URL)}", flush=True)
 print(f"[INIT] SUPABASE_KEY present: {bool(SUPABASE_KEY)}", flush=True)
@@ -61,7 +57,7 @@ def sb(table):
 
 def safe_select(table):
     if not supabase:
-        return {"error": "Supabase not initialized"}
+        return {"error": "Supabase not initialized - check env vars"}
     try:
         return sb(table).select("*").execute().data or []
     except Exception as e:
@@ -71,7 +67,7 @@ def safe_select(table):
 
 def safe_insert(table, payload):
     if not supabase:
-        return {"error": "Supabase not initialized"}
+        return {"error": "Supabase not initialized - check env vars"}
     try:
         return sb(table).insert(payload).execute().data
     except Exception as e:
@@ -97,18 +93,9 @@ def handle_error(e):
 @app.route("/")
 def home():
     try:
-        # Debug: check template folder contents
         if os.path.exists(app.template_folder):
             files = os.listdir(app.template_folder)
             print(f"[HOME] Template files: {files}", flush=True)
-        else:
-            print(f"[HOME] Template folder missing: {app.template_folder}", flush=True)
-            # Search for any html files
-            for root, dirs, files in os.walk(BASE_DIR):
-                for f in files:
-                    if f.endswith('.html'):
-                        print(f"[HOME] Found html: {os.path.join(root, f)}", flush=True)
-
         return render_template("index.html")
     except Exception as e:
         print(f"[ERROR RENDER] {type(e).__name__}: {e}", flush=True)
@@ -278,7 +265,7 @@ def add_collateral():
 
 
 # =========================
-# HEALTH CHECK
+# DIAGNOSTICS
 # =========================
 
 @app.route("/api/health")
@@ -290,10 +277,27 @@ def health():
     return jsonify({
         "status": "ok",
         "supabase_connected": bool(supabase),
+        "supabase_url_set": bool(os.environ.get("SUPABASE_URL")),
+        "supabase_key_set": bool(os.environ.get("SUPABASE_KEY")),
         "cwd": os.getcwd(),
         "base_dir": BASE_DIR,
         "template_folder": app.template_folder,
         "template_exists": os.path.exists(app.template_folder),
         "template_files": template_files,
         "base_files": os.listdir(BASE_DIR) if os.path.exists(BASE_DIR) else []
+    })
+
+
+@app.route("/api/debug/env")
+def debug_env():
+    """Debug endpoint - shows which env vars are available (names only, no values for security)"""
+    env_names = sorted(os.environ.keys())
+    supabase_related = [k for k in env_names if 'supabase' in k.lower()]
+
+    return jsonify({
+        "total_env_vars": len(env_names),
+        "supabase_related_keys": supabase_related,
+        "has_supabase_url": bool(os.environ.get("SUPABASE_URL")),
+        "has_supabase_key": bool(os.environ.get("SUPABASE_KEY")),
+        "all_keys": env_names  # You can remove this in production if you want
     })
