@@ -159,14 +159,30 @@ def get_borrowers():
 @app.route("/api/borrowers", methods=["POST"])
 def add_borrower():
     data = request.json
+
+    # Validate all fields
+    errors = []
+    errors.append(validate_required(data.get("full_name"), "Full name"))
+    errors.append(validate_email(data.get("email_address")))
+    errors.append(validate_phone(data.get("phone_number")))
+    errors.append(validate_required(data.get("home_address"), "Home address"))
+    errors.append(validate_date(data.get("date_of_birth"), "Date of birth"))
+    errors.append(validate_income(data.get("income_level")))
+    errors.append(validate_credit_score(data.get("credit_score")))
+
+    # Remove None values (passed validations)
+    errors = [e for e in errors if e]
+    if errors:
+        return jsonify({"error": "Validation failed", "details": errors}), 400
+
     payload = {
-        "full_name": data.get("full_name"),
-        "email_address": data.get("email_address"),
-        "phone_number": data.get("phone_number"),
-        "home_address": data.get("home_address"),
+        "full_name": data.get("full_name").strip(),
+        "email_address": data.get("email_address").strip().lower(),
+        "phone_number": data.get("phone_number").strip(),
+        "home_address": data.get("home_address").strip(),
         "date_of_birth": data.get("date_of_birth"),
-        "income_level": data.get("income_level"),
-        "credit_score": data.get("credit_score"),
+        "income_level": float(data.get("income_level")),
+        "credit_score": int(data.get("credit_score")),
     }
     return jsonify(safe_insert("borrower", payload))
 
@@ -191,10 +207,20 @@ def get_staff():
 @app.route("/api/staff", methods=["POST"])
 def add_staff():
     data = request.json
+
+    errors = []
+    errors.append(validate_required(data.get("staff_name"), "Staff name"))
+    errors.append(validate_required(data.get("role"), "Role"))
+    errors.append(validate_required(data.get("department"), "Department"))
+
+    errors = [e for e in errors if e]
+    if errors:
+        return jsonify({"error": "Validation failed", "details": errors}), 400
+
     payload = {
-        "staff_name": data.get("staff_name"),
-        "role": data.get("role"),
-        "department": data.get("department"),
+        "staff_name": data.get("staff_name").strip(),
+        "role": data.get("role").strip(),
+        "department": data.get("department").strip(),
     }
     return jsonify(safe_insert("staff", payload))
 
@@ -211,13 +237,36 @@ def get_loans():
 @app.route("/api/loans", methods=["POST"])
 def add_loan():
     data = request.json
+
+    errors = []
+    errors.append(validate_positive_number(data.get("borrower_id"), "Borrower ID"))
+    errors.append(validate_positive_number(data.get("staff_id"), "Staff ID"))
+    errors.append(validate_required(data.get("loan_type"), "Loan type"))
+    errors.append(validate_positive_number(data.get("principal_amount"), "Principal amount"))
+    errors.append(validate_positive_number(data.get("interest_rate"), "Interest rate", max_value=100))
+    errors.append(validate_positive_number(data.get("term_months"), "Term (months)", max_value=600))
+    errors.append(validate_date(data.get("start_date"), "Start date"))
+    errors.append(validate_date(data.get("end_date"), "End date"))
+
+    # Validate end date is after start date
+    if data.get("start_date") and data.get("end_date"):
+        from datetime import datetime
+        start = datetime.strptime(data.get("start_date"), '%Y-%m-%d')
+        end = datetime.strptime(data.get("end_date"), '%Y-%m-%d')
+        if end <= start:
+            errors.append("End date must be after start date")
+
+    errors = [e for e in errors if e]
+    if errors:
+        return jsonify({"error": "Validation failed", "details": errors}), 400
+
     payload = {
-        "borrower_id": data.get("borrower_id"),
-        "staff_id": data.get("staff_id"),
-        "loan_type": data.get("loan_type"),
-        "principal_amount": data.get("principal_amount"),
-        "interest_rate": data.get("interest_rate"),
-        "term_months": data.get("term_months"),
+        "borrower_id": int(data.get("borrower_id")),
+        "staff_id": int(data.get("staff_id")),
+        "loan_type": data.get("loan_type").strip(),
+        "principal_amount": float(data.get("principal_amount")),
+        "interest_rate": float(data.get("interest_rate")),
+        "term_months": int(data.get("term_months")),
         "start_date": data.get("start_date"),
         "end_date": data.get("end_date"),
         "loan_status": data.get("loan_status", "Active"),
@@ -237,12 +286,32 @@ def get_payments():
 @app.route("/api/payments", methods=["POST"])
 def add_payment():
     data = request.json
+
+    errors = []
+    errors.append(validate_positive_number(data.get("loan_id"), "Loan ID"))
+    errors.append(validate_positive_number(data.get("amount_paid"), "Amount paid"))
+    errors.append(validate_date(data.get("payment_date"), "Payment date"))
+    errors.append(validate_required(data.get("payment_method"), "Payment method"))
+
+    # Validate late fee is non-negative
+    late_fee = data.get("late_fee_applied", 0)
+    if late_fee is not None and late_fee != '':
+        try:
+            if float(late_fee) < 0:
+                errors.append("Late fee cannot be negative")
+        except (ValueError, TypeError):
+            errors.append("Late fee must be a valid number")
+
+    errors = [e for e in errors if e]
+    if errors:
+        return jsonify({"error": "Validation failed", "details": errors}), 400
+
     payload = {
-        "loan_id": data.get("loan_id"),
-        "amount_paid": data.get("amount_paid"),
+        "loan_id": int(data.get("loan_id")),
+        "amount_paid": float(data.get("amount_paid")),
         "payment_date": data.get("payment_date"),
-        "payment_method": data.get("payment_method"),
-        "late_fee_applied": data.get("late_fee_applied", 0),
+        "payment_method": data.get("payment_method").strip(),
+        "late_fee_applied": float(data.get("late_fee_applied", 0) or 0),
     }
     return jsonify(safe_insert("payment", payload))
 
@@ -259,11 +328,22 @@ def get_collateral():
 @app.route("/api/collateral", methods=["POST"])
 def add_collateral():
     data = request.json
+
+    errors = []
+    errors.append(validate_positive_number(data.get("loan_id"), "Loan ID"))
+    errors.append(validate_required(data.get("asset_type"), "Asset type"))
+    errors.append(validate_positive_number(data.get("market_value"), "Market value"))
+    errors.append(validate_required(data.get("asset_description"), "Asset description"))
+
+    errors = [e for e in errors if e]
+    if errors:
+        return jsonify({"error": "Validation failed", "details": errors}), 400
+
     payload = {
-        "loan_id": data.get("loan_id"),
-        "asset_type": data.get("asset_type"),
-        "market_value": data.get("market_value"),
-        "asset_description": data.get("asset_description"),
+        "loan_id": int(data.get("loan_id")),
+        "asset_type": data.get("asset_type").strip(),
+        "market_value": float(data.get("market_value")),
+        "asset_description": data.get("asset_description").strip(),
     }
     return jsonify(safe_insert("collateral", payload))
 
