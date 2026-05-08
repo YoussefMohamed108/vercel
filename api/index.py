@@ -5,15 +5,34 @@ from flask import Flask, request, jsonify, render_template
 from supabase import create_client
 from dotenv import load_dotenv
 
-# Add parent to path for imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 # =========================
 # INIT
 # =========================
 
 load_dotenv()
-app = Flask(__name__, template_folder='../templates', static_folder='../static')
+
+# Vercel serverless runtime runs from /var/task/
+# api/index.py is at /var/task/api/index.py
+# templates should be at /var/task/templates/
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
+
+# Fallback: Vercel sometimes renames 'templates' to 'template'
+if not os.path.exists(TEMPLATE_DIR):
+    ALT_TEMPLATE_DIR = os.path.join(BASE_DIR, 'template')
+    if os.path.exists(ALT_TEMPLATE_DIR):
+        TEMPLATE_DIR = ALT_TEMPLATE_DIR
+
+print(f"[INIT] BASE_DIR: {BASE_DIR}", flush=True)
+print(f"[INIT] TEMPLATE_DIR: {TEMPLATE_DIR}", flush=True)
+print(f"[INIT] TEMPLATE_DIR exists: {os.path.exists(TEMPLATE_DIR)}", flush=True)
+
+# List files in BASE_DIR for debugging
+if os.path.exists(BASE_DIR):
+    print(f"[INIT] Files in BASE_DIR: {os.listdir(BASE_DIR)}", flush=True)
+
+# Create Flask app with explicit template folder
+app = Flask(__name__, template_folder=TEMPLATE_DIR)
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
@@ -78,10 +97,31 @@ def handle_error(e):
 @app.route("/")
 def home():
     try:
+        # Debug: check template folder contents
+        if os.path.exists(app.template_folder):
+            files = os.listdir(app.template_folder)
+            print(f"[HOME] Template files: {files}", flush=True)
+        else:
+            print(f"[HOME] Template folder missing: {app.template_folder}", flush=True)
+            # Search for any html files
+            for root, dirs, files in os.walk(BASE_DIR):
+                for f in files:
+                    if f.endswith('.html'):
+                        print(f"[HOME] Found html: {os.path.join(root, f)}", flush=True)
+
         return render_template("index.html")
     except Exception as e:
-        print(f"[ERROR RENDER] {e}", flush=True)
-        return jsonify({"error": f"Template error: {str(e)}", "cwd": os.getcwd(), "files": os.listdir('.')}), 500
+        print(f"[ERROR RENDER] {type(e).__name__}: {e}", flush=True)
+        traceback.print_exc()
+        return jsonify({
+            "error": f"Template error: {str(e)}",
+            "type": type(e).__name__,
+            "cwd": os.getcwd(),
+            "base_dir": BASE_DIR,
+            "template_folder": app.template_folder,
+            "template_exists": os.path.exists(app.template_folder),
+            "files_in_base": os.listdir(BASE_DIR) if os.path.exists(BASE_DIR) else []
+        }), 500
 
 
 # =========================
@@ -243,30 +283,17 @@ def add_collateral():
 
 @app.route("/api/health")
 def health():
+    template_files = []
+    if os.path.exists(app.template_folder):
+        template_files = os.listdir(app.template_folder)
+
     return jsonify({
         "status": "ok",
         "supabase_connected": bool(supabase),
         "cwd": os.getcwd(),
+        "base_dir": BASE_DIR,
         "template_folder": app.template_folder,
-        "templates_exist": os.path.exists(app.template_folder)
+        "template_exists": os.path.exists(app.template_folder),
+        "template_files": template_files,
+        "base_files": os.listdir(BASE_DIR) if os.path.exists(BASE_DIR) else []
     })
-
-
-# =========================
-# VERCEL HANDLER
-# =========================
-
-# Vercel calls this handler for each request
-def handler(request, context=None):
-    """Vercel serverless handler"""
-    from werkzeug.wrappers import Request as WerkzeugRequest
-    from werkzeug.wrappers import Response as WerkzeugResponse
-
-    with app.request_context(request.environ):
-        try:
-            response = app.full_dispatch_request()
-            return response
-        except Exception as e:
-            print(f"[HANDLER ERROR] {e}", flush=True)
-            traceback.print_exc()
-            return WerkzeugResponse(f"Server Error: {str(e)}", status=500)
