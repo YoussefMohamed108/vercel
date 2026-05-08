@@ -30,8 +30,8 @@ if os.path.exists(BASE_DIR):
 app = Flask(__name__, template_folder=TEMPLATE_DIR)
 
 # Read Supabase credentials from os.environ (Vercel injects these)
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+SUPABASE_URL = os.environ.get("https://qimsoxokcryekmlkhphi.supabase.co")
+SUPABASE_KEY = os.environ.get("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpbXNveG9rY3J5ZWttbGtocGhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNTUwMjgsImV4cCI6MjA5MzgzMTAyOH0.POOlpFOS5MGvVjyeIrLz5ja5gEKgd4vxHPTqdfUBf8A")
 
 print(f"[INIT] SUPABASE_URL present: {bool(SUPABASE_URL)}", flush=True)
 print(f"[INIT] SUPABASE_KEY present: {bool(SUPABASE_KEY)}", flush=True)
