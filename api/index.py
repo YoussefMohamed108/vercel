@@ -289,18 +289,12 @@ def add_payment():
 
     errors = []
     errors.append(validate_positive_number(data.get("loan_id"), "Loan ID"))
-    errors.append(validate_positive_number(data.get("amount_paid"), "Amount paid"))
+    # Amount paid CAN be negative (refunds, chargebacks, corrections)
+    errors.append(validate_number(data.get("amount_paid"), "Amount paid", allow_negative=True))
     errors.append(validate_date(data.get("payment_date"), "Payment date"))
     errors.append(validate_required(data.get("payment_method"), "Payment method"))
-
-    # Validate late fee is non-negative
-    late_fee = data.get("late_fee_applied", 0)
-    if late_fee is not None and late_fee != '':
-        try:
-            if float(late_fee) < 0:
-                errors.append("Late fee cannot be negative")
-        except (ValueError, TypeError):
-            errors.append("Late fee must be a valid number")
+    # Late fee CAN be negative (fee reversals/credits)
+    errors.append(validate_number(data.get("late_fee_applied"), "Late fee", allow_negative=True))
 
     errors = [e for e in errors if e]
     if errors:
