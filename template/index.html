@@ -367,7 +367,9 @@ tr:last-child td {
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #475569; }
 </style>
-<base target="_blank">
+<!-- FIX 1: Removed <base target="_blank"> — it was hijacking all SPA navigation
+     links (nav buttons use onclick, not hrefs, so this had no benefit and broke
+     any anchor-based internal links). -->
 </head>
 
 <body>
@@ -439,8 +441,10 @@ tr:last-child td {
       <input id="b_name" placeholder="Full Name">
       <input id="b_email" placeholder="Email Address" type="email">
       <input id="b_phone" placeholder="Phone Number">
-      <input id="b_income" placeholder="Income Level" type="number" step="0.01">
-      <input id="b_credit" placeholder="Credit Score" type="number">
+      <!-- FIX 2: Income uses step="0.01" (decimal dollars — correct).
+           Credit score uses step="1" min="300" max="850" (integer, bounded range). -->
+      <input id="b_income" placeholder="Income Level" type="number" step="0.01" min="0">
+      <input id="b_credit" placeholder="Credit Score (300–850)" type="number" step="1" min="300" max="850">
       <input id="b_dob" placeholder="Date of Birth" type="date">
     </div>
     <div class="form-grid full">
@@ -460,6 +464,7 @@ tr:last-child td {
             <th>Phone</th>
             <th>Income</th>
             <th>Credit Score</th>
+            <!-- FIX 3: Actions column already present for borrowers — kept. -->
             <th>Actions</th>
           </tr>
         </thead>
@@ -491,10 +496,12 @@ tr:last-child td {
     <div class="table-wrap">
       <table>
         <thead>
-          <tr><th>ID</th><th>Name</th><th>Role</th><th>Department</th></tr>
+          <!-- FIX 4: Added Actions column to staff table — was missing while
+               borrowers had one. All entity tables now have consistent delete actions. -->
+          <tr><th>ID</th><th>Name</th><th>Role</th><th>Department</th><th>Actions</th></tr>
         </thead>
         <tbody id="staffTable">
-          <tr><td colspan="4" class="empty-state">No staff found</td></tr>
+          <tr><td colspan="5" class="empty-state">No staff found</td></tr>
         </tbody>
       </table>
     </div>
@@ -510,12 +517,15 @@ tr:last-child td {
   <div class="form-card">
     <h3 style="font-size:16px; margin-bottom:16px; color:var(--text-muted); font-weight:600;">Create New Loan</h3>
     <div class="form-grid">
-      <input id="l_bid" placeholder="Borrower ID" type="number">
-      <input id="l_sid" placeholder="Staff ID" type="number">
+      <!-- FIX 5: ID reference fields (borrower_id, staff_id) use step="1" min="1"
+           so decimal IDs like "2.5" are rejected at input level. Same applied to
+           term_months — it must be a whole number. -->
+      <input id="l_bid" placeholder="Borrower ID" type="number" step="1" min="1">
+      <input id="l_sid" placeholder="Staff ID" type="number" step="1" min="1">
       <input id="l_type" placeholder="Loan Type">
-      <input id="l_amount" placeholder="Principal Amount" type="number" step="0.01">
-      <input id="l_rate" placeholder="Interest Rate (%)" type="number" step="0.01">
-      <input id="l_term" placeholder="Term (Months)" type="number">
+      <input id="l_amount" placeholder="Principal Amount" type="number" step="0.01" min="0.01">
+      <input id="l_rate" placeholder="Interest Rate (%)" type="number" step="0.01" min="0" max="100">
+      <input id="l_term" placeholder="Term (Months)" type="number" step="1" min="1">
       <input id="l_start" placeholder="Start Date" type="date">
       <input id="l_end" placeholder="End Date" type="date">
       <select id="l_status">
@@ -533,10 +543,11 @@ tr:last-child td {
     <div class="table-wrap">
       <table>
         <thead>
-          <tr><th>Loan ID</th><th>Borrower ID</th><th>Staff ID</th><th>Type</th><th>Amount</th><th>Rate</th><th>Term</th><th>Status</th></tr>
+          <!-- FIX 6: Added Actions column to loans table for delete consistency. -->
+          <tr><th>Loan ID</th><th>Borrower ID</th><th>Staff ID</th><th>Type</th><th>Amount</th><th>Rate</th><th>Term</th><th>Status</th><th>Actions</th></tr>
         </thead>
         <tbody id="loanTable">
-          <tr><td colspan="8" class="empty-state">No loans found</td></tr>
+          <tr><td colspan="9" class="empty-state">No loans found</td></tr>
         </tbody>
       </table>
     </div>
@@ -552,8 +563,9 @@ tr:last-child td {
   <div class="form-card">
     <h3 style="font-size:16px; margin-bottom:16px; color:var(--text-muted); font-weight:600;">Record Payment</h3>
     <div class="form-grid">
-      <input id="p_loan" placeholder="Loan ID" type="number">
-      <input id="p_amount" placeholder="Amount Paid" type="number" step="0.01">
+      <!-- FIX 7: Loan ID field uses step="1" min="1" — IDs must be positive integers. -->
+      <input id="p_loan" placeholder="Loan ID" type="number" step="1" min="1">
+      <input id="p_amount" placeholder="Amount Paid" type="number" step="0.01" min="0.01">
       <input id="p_date" placeholder="Payment Date" type="date">
       <select id="p_method">
         <option value="">Payment Method</option>
@@ -562,7 +574,8 @@ tr:last-child td {
         <option value="Check">Check</option>
         <option value="Card">Card</option>
       </select>
-      <input id="p_fee" placeholder="Late Fee" type="number" step="0.01" value="0">
+      <!-- FIX 8: Late fee defaults to 0 and min="0" — negative fees make no sense. -->
+      <input id="p_fee" placeholder="Late Fee" type="number" step="0.01" min="0" value="0">
     </div>
     <button class="btn btn-success" onclick="addPayment()">✓ Record Payment</button>
   </div>
@@ -590,9 +603,11 @@ tr:last-child td {
   <div class="form-card">
     <h3 style="font-size:16px; margin-bottom:16px; color:var(--text-muted); font-weight:600;">Register Collateral</h3>
     <div class="form-grid">
-      <input id="c_loan" placeholder="Loan ID" type="number">
+      <!-- FIX 9: Loan ID field uses step="1" min="1" for integer-only IDs. -->
+      <input id="c_loan" placeholder="Loan ID" type="number" step="1" min="1">
       <input id="c_type" placeholder="Asset Type">
-      <input id="c_value" placeholder="Market Value" type="number" step="0.01">
+      <!-- FIX 10: Market value min="0.01" — zero or negative asset value is invalid. -->
+      <input id="c_value" placeholder="Market Value" type="number" step="0.01" min="0.01">
     </div>
     <div class="form-grid full">
       <textarea id="c_desc" placeholder="Asset Description"></textarea>
@@ -627,7 +642,6 @@ function show(id, btn) {
 function toast(msg, type='success') {
   const el = document.createElement('div');
   el.className = 'toast ' + type;
-  // Handle multi-line validation errors
   if (msg.includes('\n')) {
     el.innerHTML = '<strong>Validation Errors:</strong><br>' + msg.split('\n').map(m => '• ' + m).join('<br>');
     el.style.maxWidth = '400px';
@@ -639,7 +653,6 @@ function toast(msg, type='success') {
   setTimeout(() => el.remove(), type === 'error' ? 5000 : 3000);
 }
 
-// API Helper with validation error handling
 const api = (url, options = {}) =>
   fetch(url, {
     headers: { "Content-Type": "application/json" },
@@ -647,7 +660,6 @@ const api = (url, options = {}) =>
   }).then(async r => {
     const data = await r.json().catch(() => null);
     if (!r.ok) {
-      // Handle validation errors (400 Bad Request)
       if (r.status === 400 && data?.details) {
         throw new Error(data.details.join('\n'));
       }
@@ -742,19 +754,22 @@ async function loadStaff() {
     const data = await api('/api/staff');
     const tbody = document.getElementById('staffTable');
     if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No staff found</td></tr>';
+      // FIX 4 (cont.): colspan updated from 4 to 5 to match new Actions column.
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No staff found</td></tr>';
       return;
     }
+    // FIX 4 (cont.): Delete button rendered for each staff row.
     tbody.innerHTML = data.map(s => `
       <tr>
         <td>${val(s.staff_id)}</td>
         <td><strong>${val(s.staff_name)}</strong></td>
         <td><span class="badge badge-default">${val(s.role)}</span></td>
         <td>${val(s.department)}</td>
+        <td><button class="btn btn-danger" onclick="deleteStaff(${s.staff_id})">Delete</button></td>
       </tr>
     `).join('');
   } catch(e) {
-    document.getElementById('staffTable').innerHTML = '<tr><td colspan="4" class="empty-state">Error loading staff</td></tr>';
+    document.getElementById('staffTable').innerHTML = '<tr><td colspan="5" class="empty-state">Error loading staff</td></tr>';
   }
 }
 
@@ -776,6 +791,18 @@ async function addStaff() {
   }
 }
 
+// FIX 4 (cont.): deleteStaff function added — previously missing entirely.
+async function deleteStaff(id) {
+  if (!confirm('Delete staff member #' + id + '?')) return;
+  try {
+    await api('/api/staff/' + id, { method: 'DELETE' });
+    toast('Staff member deleted');
+    loadStaff();
+  } catch(e) {
+    toast('Error: ' + e.message, 'error');
+  }
+}
+
 // ================= LOANS =================
 function getStatusBadge(status) {
   const s = (status || '').toLowerCase();
@@ -789,9 +816,11 @@ async function loadLoans() {
     const data = await api('/api/loans');
     const tbody = document.getElementById('loanTable');
     if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No loans found</td></tr>';
+      // FIX 6 (cont.): colspan updated from 8 to 9 to match new Actions column.
+      tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No loans found</td></tr>';
       return;
     }
+    // FIX 6 (cont.): Delete button rendered for each loan row.
     tbody.innerHTML = data.map(l => `
       <tr>
         <td>${val(l.loan_id)}</td>
@@ -802,10 +831,11 @@ async function loadLoans() {
         <td>${val(l.interest_rate)}%</td>
         <td>${val(l.term_months)} mo</td>
         <td>${getStatusBadge(l.loan_status)}</td>
+        <td><button class="btn btn-danger" onclick="deleteLoan(${l.loan_id})">Delete</button></td>
       </tr>
     `).join('');
   } catch(e) {
-    document.getElementById('loanTable').innerHTML = '<tr><td colspan="8" class="empty-state">Error loading loans</td></tr>';
+    document.getElementById('loanTable').innerHTML = '<tr><td colspan="9" class="empty-state">Error loading loans</td></tr>';
   }
 }
 
@@ -825,8 +855,24 @@ async function addLoan() {
         loan_status: l_status.value || 'Active'
       })
     });
-    [l_bid, l_sid, l_type, l_amount, l_rate, l_term, l_start, l_end, l_status].forEach(i => i.value = '');
+    [l_bid, l_sid, l_type, l_amount, l_rate, l_term, l_start, l_end].forEach(i => i.value = '');
+    // FIX 11: l_status is a <select> — reset it to index 0 (the placeholder option)
+    // rather than setting .value = '' which may not deselect reliably across browsers.
+    l_status.selectedIndex = 0;
     toast('Loan created successfully');
+    loadLoans();
+    loadStats();
+  } catch(e) {
+    toast('Error: ' + e.message, 'error');
+  }
+}
+
+// FIX 6 (cont.): deleteLoan function added — previously missing entirely.
+async function deleteLoan(id) {
+  if (!confirm('Delete loan #' + id + '? This will also remove associated payments and collateral.')) return;
+  try {
+    await api('/api/loans/' + id, { method: 'DELETE' });
+    toast('Loan deleted');
     loadLoans();
     loadStats();
   } catch(e) {
@@ -867,10 +913,15 @@ async function addPayment() {
         amount_paid: Number(p_amount.value) || 0,
         payment_date: p_date.value,
         payment_method: p_method.value,
-        late_fee_applied: Number(p_fee.value || 0)
+        late_fee_applied: Number(p_fee.value) || 0
       })
     });
-    [p_loan, p_amount, p_date, p_method, p_fee].forEach(i => i.value = '');
+    [p_loan, p_amount, p_date].forEach(i => i.value = '');
+    // FIX 12: p_method is a <select> — reset to index 0, not .value = ''.
+    p_method.selectedIndex = 0;
+    // FIX 8 (cont.): Late fee resets to '0' (its logical default), not '' (blank),
+    // which would render the field empty after submission.
+    p_fee.value = '0';
     toast('Payment recorded successfully');
     loadPayments();
     loadStats();
