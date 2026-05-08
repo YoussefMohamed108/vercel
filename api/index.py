@@ -15,7 +15,7 @@ load_dotenv()
 # api/index.py is at /var/task/api/index.py
 # templates should be at /var/task/templates/
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
+TEMPLATE_DIR = os.path.join(BASE_DIR, 'template')
 
 # Fallback: Vercel sometimes renames 'templates' to 'template'
 if not os.path.exists(TEMPLATE_DIR):
