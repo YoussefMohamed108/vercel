@@ -1,20 +1,18 @@
 import os
 import sys
 import traceback
+import re
+from datetime import datetime
 from flask import Flask, request, jsonify, render_template
 from supabase import create_client
 
 # =========================
-# INIT - NO load_dotenv() on Vercel!
+# INIT
 # =========================
-
-# Vercel injects env vars directly into os.environ at runtime
-# DO NOT use python-dotenv/load_dotenv() on Vercel - it doesn't work!
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
 
-# Fallback: Vercel sometimes renames 'templates' to 'template'
 if not os.path.exists(TEMPLATE_DIR):
     ALT_TEMPLATE_DIR = os.path.join(BASE_DIR, 'template')
     if os.path.exists(ALT_TEMPLATE_DIR):
@@ -24,21 +22,10 @@ print(f"[INIT] BASE_DIR: {BASE_DIR}", flush=True)
 print(f"[INIT] TEMPLATE_DIR: {TEMPLATE_DIR}", flush=True)
 print(f"[INIT] TEMPLATE_DIR exists: {os.path.exists(TEMPLATE_DIR)}", flush=True)
 
-if os.path.exists(BASE_DIR):
-    print(f"[INIT] Files in BASE_DIR: {os.listdir(BASE_DIR)}", flush=True)
-
 app = Flask(__name__, template_folder=TEMPLATE_DIR)
 
-# Read Supabase credentials from os.environ (Vercel injects these)
-# First try env vars, then fall back to hardcoded values for testing
 SUPABASE_URL = os.environ.get("SUPABASE_URL") or "https://qimsoxokcryekmlkhphi.supabase.co"
-# NOTE: Using anon key here - if inserts fail due to RLS, switch to service_role key
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY") or "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFpbXNveG9rY3J5ZWttbGtocGhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgyNTUwMjgsImV4cCI6MjA5MzgzMTAyOH0.POOlpFOS5MGvVjyeIrLz5ja5gEKgd4vxHPTqdfUBf8A"
-
-print(f"[INIT] SUPABASE_URL present: {bool(SUPABASE_URL)}", flush=True)
-print(f"[INIT] SUPABASE_KEY present: {bool(SUPABASE_KEY)}", flush=True)
-print(f"[INIT] SUPABASE_URL length: {len(SUPABASE_URL) if SUPABASE_URL else 0}", flush=True)
-print(f"[INIT] SUPABASE_KEY length: {len(SUPABASE_KEY) if SUPABASE_KEY else 0}", flush=True)
 
 supabase = None
 if SUPABASE_URL and SUPABASE_KEY:
@@ -53,6 +40,100 @@ else:
 
 def sb(table):
     return supabase.table(table)
+
+
+# =========================
+# VALIDATION HELPERS  <-- THIS IS WHAT WAS MISSING
+# =========================
+
+def validate_required(value, field_name):
+    """Returns error string if value is empty/None, else None."""
+    if not value or (isinstance(value, str) and not value.strip()):
+        return f"{field_name} is required"
+    return None
+
+
+def validate_email(value):
+    """Returns error string if email is invalid, else None."""
+    if not value or not value.strip():
+        return "Email address is required"
+    pattern = r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
+    if not re.match(pattern, value.strip()):
+        return "Email address is invalid"
+    return None
+
+
+def validate_phone(value):
+    """Returns error string if phone is invalid, else None."""
+    if not value or not value.strip():
+        return "Phone number is required"
+    digits = re.sub(r'\D', '', value)
+    if len(digits) < 7 or len(digits) > 15:
+        return "Phone number must be between 7 and 15 digits"
+    return None
+
+
+def validate_date(value, field_name):
+    """Returns error string if date is missing or not YYYY-MM-DD, else None."""
+    if not value or not str(value).strip():
+        return f"{field_name} is required"
+    try:
+        datetime.strptime(str(value).strip(), '%Y-%m-%d')
+    except ValueError:
+        return f"{field_name} must be a valid date (YYYY-MM-DD)"
+    return None
+
+
+def validate_income(value):
+    """Returns error string if income is invalid, else None."""
+    if value is None or str(value).strip() == '':
+        return "Income level is required"
+    try:
+        n = float(value)
+        if n < 0:
+            return "Income level cannot be negative"
+    except (ValueError, TypeError):
+        return "Income level must be a number"
+    return None
+
+
+def validate_credit_score(value):
+    """Returns error string if credit score is out of range, else None."""
+    if value is None or str(value).strip() == '':
+        return "Credit score is required"
+    try:
+        n = int(value)
+        if n < 300 or n > 850:
+            return "Credit score must be between 300 and 850"
+    except (ValueError, TypeError):
+        return "Credit score must be a whole number"
+    return None
+
+
+def validate_positive_number(value, field_name, max_value=None):
+    """Returns error string if value is not a positive number, else None."""
+    if value is None or str(value).strip() == '':
+        return f"{field_name} is required"
+    try:
+        n = float(value)
+        if n <= 0:
+            return f"{field_name} must be greater than zero"
+        if max_value is not None and n > max_value:
+            return f"{field_name} cannot exceed {max_value}"
+    except (ValueError, TypeError):
+        return f"{field_name} must be a valid number"
+    return None
+
+
+def validate_number(value, field_name, allow_negative=False):
+    """Returns error string if value is not a number, else None."""
+    if value is None or str(value).strip() == '':
+        return f"{field_name} is required"
+    try:
+        float(value)
+    except (ValueError, TypeError):
+        return f"{field_name} must be a valid number"
+    return None
 
 
 # =========================
@@ -97,21 +178,14 @@ def handle_error(e):
 @app.route("/")
 def home():
     try:
-        if os.path.exists(app.template_folder):
-            files = os.listdir(app.template_folder)
-            print(f"[HOME] Template files: {files}", flush=True)
         return render_template("index.html")
     except Exception as e:
         print(f"[ERROR RENDER] {type(e).__name__}: {e}", flush=True)
         traceback.print_exc()
         return jsonify({
             "error": f"Template error: {str(e)}",
-            "type": type(e).__name__,
-            "cwd": os.getcwd(),
-            "base_dir": BASE_DIR,
             "template_folder": app.template_folder,
             "template_exists": os.path.exists(app.template_folder),
-            "files_in_base": os.listdir(BASE_DIR) if os.path.exists(BASE_DIR) else []
         }), 500
 
 
@@ -158,9 +232,8 @@ def get_borrowers():
 
 @app.route("/api/borrowers", methods=["POST"])
 def add_borrower():
-    data = request.json
+    data = request.json or {}
 
-    # Validate all fields
     errors = []
     errors.append(validate_required(data.get("full_name"), "Full name"))
     errors.append(validate_email(data.get("email_address")))
@@ -170,21 +243,23 @@ def add_borrower():
     errors.append(validate_income(data.get("income_level")))
     errors.append(validate_credit_score(data.get("credit_score")))
 
-    # Remove None values (passed validations)
     errors = [e for e in errors if e]
     if errors:
         return jsonify({"error": "Validation failed", "details": errors}), 400
 
     payload = {
-        "full_name": data.get("full_name").strip(),
-        "email_address": data.get("email_address").strip().lower(),
-        "phone_number": data.get("phone_number").strip(),
-        "home_address": data.get("home_address").strip(),
-        "date_of_birth": data.get("date_of_birth"),
-        "income_level": float(data.get("income_level")),
-        "credit_score": int(data.get("credit_score")),
+        "full_name": data["full_name"].strip(),
+        "email_address": data["email_address"].strip().lower(),
+        "phone_number": data["phone_number"].strip(),
+        "home_address": data["home_address"].strip(),
+        "date_of_birth": data["date_of_birth"],
+        "income_level": float(data["income_level"]),
+        "credit_score": int(data["credit_score"]),
     }
-    return jsonify(safe_insert("borrower", payload))
+    result = safe_insert("borrower", payload)
+    if isinstance(result, dict) and "error" in result:
+        return jsonify(result), 500
+    return jsonify(result)
 
 
 @app.route("/api/borrowers/<int:bid>", methods=["DELETE"])
@@ -206,7 +281,7 @@ def get_staff():
 
 @app.route("/api/staff", methods=["POST"])
 def add_staff():
-    data = request.json
+    data = request.json or {}
 
     errors = []
     errors.append(validate_required(data.get("staff_name"), "Staff name"))
@@ -218,11 +293,22 @@ def add_staff():
         return jsonify({"error": "Validation failed", "details": errors}), 400
 
     payload = {
-        "staff_name": data.get("staff_name").strip(),
-        "role": data.get("role").strip(),
-        "department": data.get("department").strip(),
+        "staff_name": data["staff_name"].strip(),
+        "role": data["role"].strip(),
+        "department": data["department"].strip(),
     }
-    return jsonify(safe_insert("staff", payload))
+    result = safe_insert("staff", payload)
+    if isinstance(result, dict) and "error" in result:
+        return jsonify(result), 500
+    return jsonify(result)
+
+
+@app.route("/api/staff/<int:sid>", methods=["DELETE"])
+def delete_staff(sid):
+    try:
+        return jsonify(sb("staff").delete().eq("staff_id", sid).execute().data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # =========================
@@ -236,7 +322,7 @@ def get_loans():
 
 @app.route("/api/loans", methods=["POST"])
 def add_loan():
-    data = request.json
+    data = request.json or {}
 
     errors = []
     errors.append(validate_positive_number(data.get("borrower_id"), "Borrower ID"))
@@ -248,30 +334,45 @@ def add_loan():
     errors.append(validate_date(data.get("start_date"), "Start date"))
     errors.append(validate_date(data.get("end_date"), "End date"))
 
-    # Validate end date is after start date
     if data.get("start_date") and data.get("end_date"):
-        from datetime import datetime
-        start = datetime.strptime(data.get("start_date"), '%Y-%m-%d')
-        end = datetime.strptime(data.get("end_date"), '%Y-%m-%d')
-        if end <= start:
-            errors.append("End date must be after start date")
+        try:
+            start = datetime.strptime(data["start_date"], '%Y-%m-%d')
+            end = datetime.strptime(data["end_date"], '%Y-%m-%d')
+            if end <= start:
+                errors.append("End date must be after start date")
+        except ValueError:
+            pass  # already caught by validate_date above
 
     errors = [e for e in errors if e]
     if errors:
         return jsonify({"error": "Validation failed", "details": errors}), 400
 
     payload = {
-        "borrower_id": int(data.get("borrower_id")),
-        "staff_id": int(data.get("staff_id")),
-        "loan_type": data.get("loan_type").strip(),
-        "principal_amount": float(data.get("principal_amount")),
-        "interest_rate": float(data.get("interest_rate")),
-        "term_months": int(data.get("term_months")),
-        "start_date": data.get("start_date"),
-        "end_date": data.get("end_date"),
+        "borrower_id": int(data["borrower_id"]),
+        "staff_id": int(data["staff_id"]),
+        "loan_type": data["loan_type"].strip(),
+        "principal_amount": float(data["principal_amount"]),
+        "interest_rate": float(data["interest_rate"]),
+        "term_months": int(data["term_months"]),
+        "start_date": data["start_date"],
+        "end_date": data["end_date"],
         "loan_status": data.get("loan_status", "Active"),
     }
-    return jsonify(safe_insert("loan", payload))
+    result = safe_insert("loan", payload)
+    if isinstance(result, dict) and "error" in result:
+        return jsonify(result), 500
+    return jsonify(result)
+
+
+@app.route("/api/loans/<int:lid>", methods=["DELETE"])
+def delete_loan(lid):
+    try:
+        # Delete associated payments and collateral first
+        sb("payment").delete().eq("loan_id", lid).execute()
+        sb("collateral").delete().eq("loan_id", lid).execute()
+        return jsonify(sb("loan").delete().eq("loan_id", lid).execute().data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # =========================
@@ -285,15 +386,13 @@ def get_payments():
 
 @app.route("/api/payments", methods=["POST"])
 def add_payment():
-    data = request.json
+    data = request.json or {}
 
     errors = []
     errors.append(validate_positive_number(data.get("loan_id"), "Loan ID"))
-    # Amount paid CAN be negative (refunds, chargebacks, corrections)
     errors.append(validate_number(data.get("amount_paid"), "Amount paid", allow_negative=True))
     errors.append(validate_date(data.get("payment_date"), "Payment date"))
     errors.append(validate_required(data.get("payment_method"), "Payment method"))
-    # Late fee CAN be negative (fee reversals/credits)
     errors.append(validate_number(data.get("late_fee_applied"), "Late fee", allow_negative=True))
 
     errors = [e for e in errors if e]
@@ -301,13 +400,16 @@ def add_payment():
         return jsonify({"error": "Validation failed", "details": errors}), 400
 
     payload = {
-        "loan_id": int(data.get("loan_id")),
-        "amount_paid": float(data.get("amount_paid")),
-        "payment_date": data.get("payment_date"),
-        "payment_method": data.get("payment_method").strip(),
-        "late_fee_applied": float(data.get("late_fee_applied", 0) or 0),
+        "loan_id": int(data["loan_id"]),
+        "amount_paid": float(data["amount_paid"]),
+        "payment_date": data["payment_date"],
+        "payment_method": data["payment_method"].strip(),
+        "late_fee_applied": float(data.get("late_fee_applied") or 0),
     }
-    return jsonify(safe_insert("payment", payload))
+    result = safe_insert("payment", payload)
+    if isinstance(result, dict) and "error" in result:
+        return jsonify(result), 500
+    return jsonify(result)
 
 
 # =========================
@@ -321,7 +423,7 @@ def get_collateral():
 
 @app.route("/api/collateral", methods=["POST"])
 def add_collateral():
-    data = request.json
+    data = request.json or {}
 
     errors = []
     errors.append(validate_positive_number(data.get("loan_id"), "Loan ID"))
@@ -334,12 +436,15 @@ def add_collateral():
         return jsonify({"error": "Validation failed", "details": errors}), 400
 
     payload = {
-        "loan_id": int(data.get("loan_id")),
-        "asset_type": data.get("asset_type").strip(),
-        "market_value": float(data.get("market_value")),
-        "asset_description": data.get("asset_description").strip(),
+        "loan_id": int(data["loan_id"]),
+        "asset_type": data["asset_type"].strip(),
+        "market_value": float(data["market_value"]),
+        "asset_description": data["asset_description"].strip(),
     }
-    return jsonify(safe_insert("collateral", payload))
+    result = safe_insert("collateral", payload)
+    if isinstance(result, dict) and "error" in result:
+        return jsonify(result), 500
+    return jsonify(result)
 
 
 # =========================
@@ -351,31 +456,24 @@ def health():
     template_files = []
     if os.path.exists(app.template_folder):
         template_files = os.listdir(app.template_folder)
-
     return jsonify({
         "status": "ok",
         "supabase_connected": bool(supabase),
         "supabase_url_set": bool(os.environ.get("SUPABASE_URL")),
         "supabase_key_set": bool(os.environ.get("SUPABASE_KEY")),
-        "cwd": os.getcwd(),
-        "base_dir": BASE_DIR,
         "template_folder": app.template_folder,
         "template_exists": os.path.exists(app.template_folder),
         "template_files": template_files,
-        "base_files": os.listdir(BASE_DIR) if os.path.exists(BASE_DIR) else []
     })
 
 
 @app.route("/api/debug/env")
 def debug_env():
-    """Debug endpoint - shows which env vars are available (names only, no values for security)"""
     env_names = sorted(os.environ.keys())
     supabase_related = [k for k in env_names if 'supabase' in k.lower()]
-
     return jsonify({
         "total_env_vars": len(env_names),
         "supabase_related_keys": supabase_related,
         "has_supabase_url": bool(os.environ.get("SUPABASE_URL")),
         "has_supabase_key": bool(os.environ.get("SUPABASE_KEY")),
-        "all_keys": env_names  # You can remove this in production if you want
     })
