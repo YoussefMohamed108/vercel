@@ -2,14 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Bank Loan Management System</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d1117;color:#e6edf3;font-size:14px}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d1117;color:#e6edf3;font-size:14px;-webkit-tap-highlight-color:transparent}
+
+/* ── LAYOUT ── */
 .app{display:flex;height:100vh;overflow:hidden}
-.sidebar{width:230px;flex-shrink:0;background:#161b22;border-right:1px solid #30363d;display:flex;flex-direction:column;padding:0;overflow-y:auto}
+
+/* ── SIDEBAR (Desktop) ── */
+.sidebar{width:230px;flex-shrink:0;background:#161b22;border-right:1px solid #30363d;display:flex;flex-direction:column;padding:0;overflow-y:auto;transition:transform .3s ease;z-index:100}
 .logo{display:flex;align-items:center;gap:10px;padding:20px 16px 18px;border-bottom:1px solid #30363d}
 .logo-icon{width:32px;height:32px;background:#1f6feb;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;flex-shrink:0}
 .logo-name{font-size:15px;font-weight:600;color:#f0f6fc;letter-spacing:-.2px}
@@ -22,11 +26,34 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
 .nav-btn i{font-size:17px;width:18px;flex-shrink:0}
 .sidebar-footer{padding:12px 16px;border-top:1px solid #30363d;display:flex;align-items:center;gap:8px;font-size:12px;color:#6e7681}
 .status-dot{width:7px;height:7px;border-radius:50%;background:#3fb950;flex-shrink:0}
-.main{flex:1;overflow-y:auto;background:#0d1117;padding:28px 32px}
+
+/* ── MOBILE SIDEBAR OVERLAY ── */
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99;backdrop-filter:blur(2px)}
+.sidebar-overlay.open{display:block}
+
+/* ── MAIN ── */
+.main{flex:1;overflow-y:auto;background:#0d1117;padding:28px 32px;min-width:0}
 .hidden{display:none!important}
-.page-hdr{margin-bottom:28px;display:flex;justify-content:space-between;align-items:flex-start}
+
+/* ── MOBILE HEADER ── */
+.mobile-header{display:none;align-items:center;gap:12px;padding:12px 16px;background:#161b22;border-bottom:1px solid #30363d;position:sticky;top:0;z-index:50}
+.mobile-header .logo-icon{width:28px;height:28px;font-size:14px}
+.mobile-header .logo-name{font-size:14px}
+.menu-btn{background:none;border:none;color:#8b949e;font-size:22px;cursor:pointer;padding:4px;display:flex;align-items:center;justify-content:center}
+
+/* ── BOTTOM NAV (Mobile) ── */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#161b22;border-top:1px solid #30363d;z-index:100;padding:6px 0 8px;justify-content:space-around}
+.bottom-nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 8px;border:none;background:transparent;color:#6e7681;font-size:10px;cursor:pointer;transition:color .15s;flex:1;max-width:80px}
+.bottom-nav-btn i{font-size:20px}
+.bottom-nav-btn.active{color:#58a6ff}
+.bottom-nav-btn:active{transform:scale(.95)}
+
+/* ── PAGE HEADER ── */
+.page-hdr{margin-bottom:28px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px}
 .page-hdr-left h1{font-size:22px;font-weight:600;color:#f0f6fc;letter-spacing:-.3px}
 .page-hdr-left p{font-size:13px;color:#6e7681;margin-top:3px}
+
+/* ── STATS ── */
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
 .stat{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px 20px}
 .stat-lbl{font-size:11px;font-weight:600;color:#6e7681;text-transform:uppercase;letter-spacing:.6px;display:flex;align-items:center;gap:6px;margin-bottom:10px}
@@ -37,6 +64,8 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
 .stat:nth-child(2) .stat-lbl i{color:#3fb950}
 .stat:nth-child(3) .stat-lbl i{color:#d29922}
 .stat:nth-child(4) .stat-lbl i{color:#f85149}
+
+/* ── CARDS ── */
 .card{background:#161b22;border:1px solid #30363d;border-radius:12px}
 .dash-bottom{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .card-hdr{padding:16px 20px;border-bottom:1px solid #30363d;display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;color:#e6edf3}
@@ -47,21 +76,27 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
 .qs-row span:last-child{font-weight:600;color:#f0f6fc}
 .empty-box{text-align:center;padding:32px;color:#6e7681;font-size:13px}
 .empty-box i{font-size:32px;display:block;margin-bottom:8px;opacity:.4}
-.sec-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+
+/* ── SECTION HEADER ── */
+.sec-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px}
 .sec-hdr h2{font-size:18px;font-weight:600;color:#f0f6fc}
+
+/* ── FORMS ── */
 .form-card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:20px;margin-bottom:18px}
 .form-title{font-size:13px;font-weight:600;color:#8b949e;margin-bottom:16px;display:flex;align-items:center;gap:7px}
 .form-title i{font-size:15px}
 .form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:12px;margin-bottom:14px}
 .field{display:flex;flex-direction:column;gap:5px}
 .field label{font-size:11.5px;font-weight:500;color:#8b949e}
-input,select,textarea{background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#e6edf3;font-size:13.5px;font-family:inherit;padding:8px 12px;width:100%;transition:border-color .15s}
+input,select,textarea{background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#e6edf3;font-size:13.5px;font-family:inherit;padding:8px 12px;width:100%;transition:border-color .15s;-webkit-appearance:none}
 input:focus,select:focus,textarea:focus{outline:none;border-color:#388bfd;box-shadow:0 0 0 3px rgba(56,139,253,.15)}
 input::placeholder,textarea::placeholder{color:#484f58}
 select option{background:#161b22}
 textarea{min-height:70px;resize:vertical}
-.form-actions{display:flex;gap:8px;margin-top:4px}
-.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;font-family:inherit;border:1px solid #30363d;background:#21262d;color:#c9d1d9}
+.form-actions{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;font-family:inherit;border:1px solid #30363d;background:#21262d;color:#c9d1d9;white-space:nowrap}
 .btn:hover{background:#30363d;border-color:#6e7681}
 .btn-blue{background:#1f6feb;border-color:#1f6feb;color:#fff}
 .btn-blue:hover{background:#388bfd;border-color:#388bfd}
@@ -69,9 +104,11 @@ textarea{min-height:70px;resize:vertical}
 .btn-green:hover{background:#2da44e;border-color:#2da44e}
 .btn-sm-red{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;border:1px solid #f8514933;background:#f8514911;color:#f85149;transition:opacity .15s}
 .btn-sm-red:hover{background:#f8514922}
+
+/* ── TABLES ── */
 .tbl-card{background:#161b22;border:1px solid #30363d;border-radius:12px;overflow:hidden}
-.tbl-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;min-width:600px}
 thead th{padding:10px 16px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:#6e7681;background:#161b22;border-bottom:1px solid #30363d;white-space:nowrap}
 tbody td{padding:13px 16px;border-bottom:1px solid #21262d;color:#e6edf3;vertical-align:middle}
 tbody tr:last-child td{border-bottom:none}
@@ -79,6 +116,8 @@ tbody tr:hover td{background:#1c2128}
 .id-cell{color:#484f58;font-size:12px;font-family:monospace}
 .money{font-weight:600;color:#f0f6fc}
 .money-green{font-weight:600;color:#3fb950}
+
+/* ── BADGES ── */
 .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:500;white-space:nowrap}
 .badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
 .b-active{background:#1a7f3722;color:#3fb950}
@@ -87,24 +126,79 @@ tbody tr:hover td{background:#1c2128}
 .b-defaulted{background:#f8514922;color:#f85149}
 .b-role{background:#1f6feb22;color:#58a6ff}
 .b-credit{background:#7c3aed22;color:#a78bfa}
+
+/* ── AVATARS ── */
 .av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
 .av-blue{background:#1f6feb33;color:#58a6ff}
 .av-green{background:#1a7f3733;color:#3fb950}
 .av-amber{background:#9e6a0333;color:#d29922}
 .av-purple{background:#7c3aed33;color:#a78bfa}
 .name-cell{display:flex;align-items:center;gap:9px}
-#toasts{position:fixed;top:16px;right:16px;display:flex;flex-direction:column;gap:8px;z-index:9999}
+
+/* ── TOASTS ── */
+#toasts{position:fixed;top:16px;right:16px;display:flex;flex-direction:column;gap:8px;z-index:9999;max-width:calc(100vw - 32px)}
 .toast{padding:11px 18px;border-radius:8px;font-size:13px;font-weight:500;max-width:320px;animation:tin .2s ease;border:1px solid}
 @keyframes tin{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:none}}
 .t-ok{background:#1a7f3744;border-color:#3fb950;color:#3fb950}
 .t-err{background:#f8514933;border-color:#f85149;color:#f85149}
+
+/* ── MOBILE CARDS (Table alternative) ── */
+.mobile-cards{display:none;flex-direction:column;gap:10px}
+.m-card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:14px 16px}
+.m-card-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #21262d;font-size:13px}
+.m-card-row:last-child{border-bottom:none;padding-bottom:0}
+.m-card-row:first-child{padding-top:0}
+.m-card-label{color:#6e7681;font-size:12px}
+.m-card-value{color:#f0f6fc;font-weight:500}
+.m-card-actions{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid #21262d}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .sidebar{position:fixed;left:0;top:0;bottom:0;transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .mobile-header{display:flex}
+  .bottom-nav{display:flex}
+  .main{padding:16px;padding-bottom:80px}
+  .stats{grid-template-columns:repeat(2,1fr);gap:10px}
+  .stat{padding:14px 16px}
+  .stat-val{font-size:22px}
+  .dash-bottom{grid-template-columns:1fr}
+  .page-hdr{margin-bottom:20px}
+  .page-hdr-left h1{font-size:18px}
+  .sec-hdr h2{font-size:16px}
+  .form-grid{grid-template-columns:1fr}
+  .form-card{padding:16px}
+  .tbl-wrap{display:none}
+  .mobile-cards{display:flex}
+  .btn{padding:10px 16px;font-size:14px}
+  .btn-sm-red{padding:6px 12px;font-size:13px}
+}
+
+@media (max-width: 480px) {
+  .stats{grid-template-columns:1fr}
+  .page-hdr{flex-direction:column}
+  .page-hdr-left h1{font-size:16px}
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#484f58}
+
+/* ── SAFE AREA (Notch phones) ── */
+@supports(padding:max(0px)) {
+  .bottom-nav{padding-bottom:max(8px, env(safe-area-inset-bottom))}
+  .main{padding-bottom:max(80px, calc(80px + env(safe-area-inset-bottom)))}
+}
 </style>
+<base target="_blank">
 </head>
 <body>
 <div class="app">
 
 <!-- SIDEBAR -->
-<div class="sidebar">
+<div class="sidebar" id="sidebar">
   <div class="logo">
     <div class="logo-icon"><i class="ti ti-building-bank"></i></div>
     <span class="logo-name">BankLoan</span>
@@ -122,8 +216,18 @@ tbody tr:hover td{background:#1c2128}
   <div class="sidebar-footer"><div class="status-dot"></div>System online</div>
 </div>
 
+<!-- OVERLAY -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
 <!-- MAIN -->
 <div class="main">
+
+<!-- MOBILE HEADER -->
+<div class="mobile-header">
+  <button class="menu-btn" onclick="toggleSidebar()"><i class="ti ti-menu-2"></i></button>
+  <div class="logo-icon"><i class="ti ti-building-bank"></i></div>
+  <span class="logo-name">BankLoan</span>
+</div>
 
 <!-- DASHBOARD -->
 <div id="p-dashboard">
@@ -196,10 +300,13 @@ tbody tr:hover td{background:#1c2128}
       <button class="btn" onclick="tog('bForm')">Cancel</button>
     </div>
   </div>
+  <!-- Desktop Table -->
   <div class="tbl-card"><div class="tbl-wrap"><table>
     <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Income</th><th>Credit score</th><th></th></tr></thead>
     <tbody id="borrowerTable"><tr><td colspan="7" class="empty-box" style="padding:32px">No borrowers yet — click Add borrower to get started</td></tr></tbody>
   </table></div></div>
+  <!-- Mobile Cards -->
+  <div class="mobile-cards" id="borrowerCards"></div>
 </div>
 
 <!-- STAFF -->
@@ -224,6 +331,7 @@ tbody tr:hover td{background:#1c2128}
     <thead><tr><th>ID</th><th>Name</th><th>Role</th><th>Department</th><th></th></tr></thead>
     <tbody id="staffTable"><tr><td colspan="5" class="empty-box" style="padding:32px">No staff yet</td></tr></tbody>
   </table></div></div>
+  <div class="mobile-cards" id="staffCards"></div>
 </div>
 
 <!-- LOANS -->
@@ -262,6 +370,7 @@ tbody tr:hover td{background:#1c2128}
     <thead><tr><th>Loan ID</th><th>Borrower</th><th>Staff</th><th>Type</th><th>Amount</th><th>Rate</th><th>Term</th><th>Status</th><th></th></tr></thead>
     <tbody id="loanTable"><tr><td colspan="9" class="empty-box" style="padding:32px">No loans yet</td></tr></tbody>
   </table></div></div>
+  <div class="mobile-cards" id="loanCards"></div>
 </div>
 
 <!-- PAYMENTS -->
@@ -296,6 +405,7 @@ tbody tr:hover td{background:#1c2128}
     <thead><tr><th>Payment ID</th><th>Loan ID</th><th>Amount</th><th>Date</th><th>Method</th><th>Late fee</th></tr></thead>
     <tbody id="paymentTable"><tr><td colspan="6" class="empty-box" style="padding:32px">No payments yet</td></tr></tbody>
   </table></div></div>
+  <div class="mobile-cards" id="paymentCards"></div>
 </div>
 
 <!-- COLLATERAL -->
@@ -321,24 +431,78 @@ tbody tr:hover td{background:#1c2128}
     <thead><tr><th>ID</th><th>Loan ID</th><th>Asset type</th><th>Value</th><th>Description</th></tr></thead>
     <tbody id="collateralTable"><tr><td colspan="5" class="empty-box" style="padding:32px">No collateral yet</td></tr></tbody>
   </table></div></div>
+  <div class="mobile-cards" id="collateralCards"></div>
 </div>
 
 </div><!-- /main -->
 </div><!-- /app -->
+
+<!-- BOTTOM NAV (Mobile) -->
+<div class="bottom-nav" id="bottomNav">
+  <button class="bottom-nav-btn active" onclick="go('dashboard',null);setBottomActive(this)">
+    <i class="ti ti-layout-dashboard"></i>Dashboard
+  </button>
+  <button class="bottom-nav-btn" onclick="go('borrowers',null);setBottomActive(this)">
+    <i class="ti ti-users"></i>Borrowers
+  </button>
+  <button class="bottom-nav-btn" onclick="go('loans',null);setBottomActive(this)">
+    <i class="ti ti-receipt-2"></i>Loans
+  </button>
+  <button class="bottom-nav-btn" onclick="go('payments',null);setBottomActive(this)">
+    <i class="ti ti-credit-card"></i>Payments
+  </button>
+  <button class="bottom-nav-btn" onclick="go('staff',null);setBottomActive(this)">
+    <i class="ti ti-user-check"></i>Staff
+  </button>
+</div>
+
 <div id="toasts"></div>
 
 <script>
+// ── NAVIGATION ──
+let currentPage = 'dashboard';
+
 function go(id, btn) {
-  document.querySelectorAll('.main > div').forEach(d => d.classList.add('hidden'));
+  currentPage = id;
+  document.querySelectorAll('.main > div[id^="p-"]').forEach(d => d.classList.add('hidden'));
   document.getElementById('p-' + id).classList.remove('hidden');
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
+
+  // Update sidebar
+  if (btn) {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  // Update bottom nav
+  document.querySelectorAll('.bottom-nav-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent.trim().toLowerCase().includes(id));
+  });
+
+  // Close sidebar on mobile
+  closeSidebar();
+  window.scrollTo(0,0);
+}
+
+function setBottomActive(btn) {
+  document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
 }
 
 function tog(id) {
   document.getElementById(id).classList.toggle('hidden');
 }
 
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
+// ── TOASTS ──
 function toast(msg, type = 'ok') {
   const w = document.getElementById('toasts');
   const el = document.createElement('div');
@@ -348,6 +512,7 @@ function toast(msg, type = 'ok') {
   setTimeout(() => el.remove(), 3500);
 }
 
+// ── API ──
 const api = (url, o = {}) => fetch(url, {
   headers: { "Content-Type": "application/json" }, ...o
 }).then(async r => {
@@ -397,10 +562,13 @@ async function loadBorrowers() {
   try {
     const data = await api('/api/borrowers');
     const tb = document.getElementById('borrowerTable');
+    const cards = document.getElementById('borrowerCards');
     if (!data || !data.length) {
       tb.innerHTML = '<tr><td colspan="7" class="empty-box" style="padding:32px">No borrowers yet</td></tr>';
+      cards.innerHTML = '<div class="empty-box"><i class="ti ti-users" style="font-size:32px"></i>No borrowers yet</div>';
       return;
     }
+    // Desktop table
     tb.innerHTML = data.map((b, i) => `<tr>
       <td class="id-cell">#${v(b.borrower_id)}</td>
       <td><div class="name-cell">${av(b.full_name, i)}<span style="font-weight:500">${v(b.full_name)}</span></div></td>
@@ -410,6 +578,17 @@ async function loadBorrowers() {
       <td><span class="badge b-credit">${v(b.credit_score)}</span></td>
       <td><button class="btn-sm-red" onclick="delBorrower(${b.borrower_id})"><i class="ti ti-trash" style="font-size:12px"></i>Delete</button></td>
     </tr>`).join('');
+    // Mobile cards
+    cards.innerHTML = data.map((b, i) => `
+      <div class="m-card">
+        <div class="m-card-row"><span class="m-card-label">ID</span><span class="m-card-value id-cell">#${v(b.borrower_id)}</span></div>
+        <div class="m-card-row"><span class="m-card-label">Name</span><span class="m-card-value">${v(b.full_name)}</span></div>
+        <div class="m-card-row"><span class="m-card-label">Email</span><span class="m-card-value">${v(b.email_address)}</span></div>
+        <div class="m-card-row"><span class="m-card-label">Phone</span><span class="m-card-value">${v(b.phone_number)}</span></div>
+        <div class="m-card-row"><span class="m-card-label">Income</span><span class="m-card-value money">${$m(b.income_level)}</span></div>
+        <div class="m-card-row"><span class="m-card-label">Credit</span><span class="m-card-value"><span class="badge b-credit">${v(b.credit_score)}</span></span></div>
+        <div class="m-card-actions"><button class="btn-sm-red" onclick="delBorrower(${b.borrower_id})"><i class="ti ti-trash"></i>Delete</button></div>
+      </div>`).join('');
   } catch (e) {
     document.getElementById('borrowerTable').innerHTML = '<tr><td colspan="7" style="padding:20px;color:#f85149;text-align:center">Failed to load</td></tr>';
   }
@@ -449,8 +628,10 @@ async function loadStaff() {
   try {
     const data = await api('/api/staff');
     const tb = document.getElementById('staffTable');
+    const cards = document.getElementById('staffCards');
     if (!data || !data.length) {
       tb.innerHTML = '<tr><td colspan="5" class="empty-box" style="padding:32px">No staff yet</td></tr>';
+      cards.innerHTML = '<div class="empty-box"><i class="ti ti-user-check" style="font-size:32px"></i>No staff yet</div>';
       return;
     }
     tb.innerHTML = data.map((s, i) => `<tr>
@@ -460,6 +641,14 @@ async function loadStaff() {
       <td style="color:#8b949e">${v(s.department)}</td>
       <td><button class="btn-sm-red" onclick="delStaff(${s.staff_id})"><i class="ti ti-trash" style="font-size:12px"></i>Delete</button></td>
     </tr>`).join('');
+    cards.innerHTML = data.map((s, i) => `
+      <div class="m-card">
+        <div class="m-card-row"><span class="m-card-label">ID</span><span class="m-card-value id-cell">#${v(s.staff_id)}</span></div>
+        <div class="m-card-row"><span class="m-card-label">Name</span><span class="m-card-value">${v(s.staff_name)}</span></div>
+        <div class="m-card-row"><span class="m-card-label">Role</span><span class="m-card-value"><span class="badge b-role">${v(s.role)}</span></span></div>
+        <div class="m-card-row"><span class="m-card-label">Department</span><span class="m-card-value">${v(s.department)}</span></div>
+        <div class="m-card-actions"><button class="btn-sm-red" onclick="delStaff(${s.staff_id})"><i class="ti ti-trash"></i>Delete</button></div>
+      </div>`).join('');
   } catch (e) {}
 }
 
@@ -492,8 +681,10 @@ async function loadLoans() {
   try {
     const data = await api('/api/loans');
     const tb = document.getElementById('loanTable');
+    const cards = document.getElementById('loanCards');
     if (!data || !data.length) {
       tb.innerHTML = '<tr><td colspan="9" class="empty-box" style="padding:32px">No loans yet</td></tr>';
+      cards.innerHTML = '<div class="empty-box"><i class="ti ti-receipt-2" style="font-size:32px"></i>No loans yet</div>';
       return;
     }
     tb.innerHTML = data.map(l => `<tr>
@@ -507,6 +698,17 @@ async function loadLoans() {
       <td>${stBadge(l.loan_status)}</td>
       <td><button class="btn-sm-red" onclick="delLoan(${l.loan_id})"><i class="ti ti-trash" style="font-size:12px"></i>Delete</button></td>
     </tr>`).join('');
+    cards.innerHTML = data.map(l => `
+      <div class="m-card">
+        <div class="m-card-row"><span class="m-card-label">Loan ID</span><span class="m-card-value id-cell">#${v(l.loan_id)}</span></div>
+        <div class="m-card-row"><span class="m-card-label">Borrower</span><span class="m-card-value">#${v(l.borrower_id)}</span></div>
+        <div class="m-card-row"><span class="m-card-label">Type</span><span class="m-card-value">${v(l.loan_type)}</span></div>
+        <div class="m-card-row"><span class="m-card-label">Amount</span><span class="m-card-value money">${$m(l.principal_amount)}</span></div>
+        <div class="m-card-row"><span class="m-card-label">Rate</span><span class="m-card-value">${v(l.interest_rate)}%</span></div>
+        <div class="m-card-row"><span class="m-card-label">Term</span><span class="m-card-value">${v(l.term_months)} mo</span></div>
+        <div class="m-card-row"><span class="m-card-label">Status</span><span class="m-card-value">${stBadge(l.loan_status)}</span></div>
+        <div class="m-card-actions"><button class="btn-sm-red" onclick="delLoan(${l.loan_id})"><i class="ti ti-trash"></i>Delete</button></div>
+      </div>`).join('');
   } catch (e) {}
 }
 
@@ -545,8 +747,10 @@ async function loadPayments() {
   try {
     const data = await api('/api/payments');
     const tb = document.getElementById('paymentTable');
+    const cards = document.getElementById('paymentCards');
     if (!data || !data.length) {
       tb.innerHTML = '<tr><td colspan="6" class="empty-box" style="padding:32px">No payments yet</td></tr>';
+      cards.innerHTML = '<div class="empty-box"><i class="ti ti-credit-card" style="font-size:32px"></i>No payments yet</div>';
       return;
     }
     tb.innerHTML = data.map(p => `<tr>
@@ -557,6 +761,15 @@ async function loadPayments() {
       <td><span class="badge b-closed">${v(p.payment_method)}</span></td>
       <td style="color:#d29922">${$m(p.late_fee_applied)}</td>
     </tr>`).join('');
+    cards.innerHTML = data.map(p => `
+      <div class="m-card">
+        <div class="m-card-row"><span class="m-card-label">Payment ID</span><span class="m-card-value id-cell">#${v(p.payment_id)}</span></div>
+        <div class="m-card-row"><span class="m-card-label">Loan ID</span><span class="m-card-value">#${v(p.loan_id)}</span></div>
+        <div class="m-card-row"><span class="m-card-label">Amount</span><span class="m-card-value money-green">${$m(p.amount_paid)}</span></div>
+        <div class="m-card-row"><span class="m-card-label">Date</span><span class="m-card-value">${v(p.payment_date)}</span></div>
+        <div class="m-card-row"><span class="m-card-label">Method</span><span class="m-card-value"><span class="badge b-closed">${v(p.payment_method)}</span></span></div>
+        <div class="m-card-row"><span class="m-card-label">Late fee</span><span class="m-card-value" style="color:#d29922">${$m(p.late_fee_applied)}</span></div>
+      </div>`).join('');
   } catch (e) {}
 }
 
@@ -583,8 +796,10 @@ async function loadCollateral() {
   try {
     const data = await api('/api/collateral');
     const tb = document.getElementById('collateralTable');
+    const cards = document.getElementById('collateralCards');
     if (!data || !data.length) {
       tb.innerHTML = '<tr><td colspan="5" class="empty-box" style="padding:32px">No collateral yet</td></tr>';
+      cards.innerHTML = '<div class="empty-box"><i class="ti ti-shield-check" style="font-size:32px"></i>No collateral yet</div>';
       return;
     }
     tb.innerHTML = data.map(c => `<tr>
@@ -594,6 +809,17 @@ async function loadCollateral() {
       <td class="money">${$m(c.market_value)}</td>
       <td style="color:#8b949e;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${v(c.asset_description)}</td>
     </tr>`).join('');
+    cards.innerHTML = data.map(c => `
+      <div class="m-card">
+        <div class="m-card-row"><span class="m-card-label">ID</span><span class="m-card-value id-cell">#${v(c.collateral_id)}</span></div>
+        <div class="m-card-row"><span class="m-card-label">Loan ID</span><span class="m-card-value">#${v(c.loan_id)}</span></div>
+        <div class="m-card-row"><span class="m-card-label">Asset Type</span><span class="m-card-value">${v(c.asset_type)}</span></div>
+        <div class="m-card-row"><span class="m-card-label">Value</span><span class="m-card-value money">${$m(c.market_value)}</span></div>
+        <div class="m-card-row" style="flex-direction:column;align-items:flex-start;gap:4px">
+          <span class="m-card-label">Description</span>
+          <span style="color:#8b949e;font-size:12px;line-height:1.4">${v(c.asset_description)}</span>
+        </div>
+      </div>`).join('');
   } catch (e) {}
 }
 
