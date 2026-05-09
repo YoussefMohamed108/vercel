@@ -1,985 +1,450 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Bank Loan Management System</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
-:root {
-  --bg: #0f172a;
-  --sidebar: #111827;
-  --card: #1e293b;
-  --border: #334155;
-  --text: #f1f5f9;
-  --text-muted: #94a3b8;
-  --accent: #3b82f6;
-  --accent-hover: #2563eb;
-  --success: #10b981;
-  --danger: #ef4444;
-  --warning: #f59e0b;
-}
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  font-family: 'Inter', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-}
-
-.sidebar {
-  width: 260px;
-  position: fixed;
-  height: 100vh;
-  background: var(--sidebar);
-  border-right: 1px solid var(--border);
-  padding: 24px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  z-index: 100;
-}
-
-.sidebar h1 {
-  font-size: 18px;
-  font-weight: 700;
-  padding: 0 12px 16px;
-  color: var(--text);
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.sidebar h1::before {
-  content: "◆";
-  color: var(--accent);
-  font-size: 14px;
-}
-
-.nav-btn {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 12px 16px;
-  border: none;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-align: left;
-}
-
-.nav-btn:hover {
-  background: rgba(59, 130, 246, 0.1);
-  color: var(--text);
-}
-
-.nav-btn.active {
-  background: var(--accent);
-  color: white;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-.nav-btn svg {
-  width: 18px;
-  height: 18px;
-  opacity: 0.8;
-}
-
-.main {
-  margin-left: 260px;
-  padding: 32px;
-  min-height: 100vh;
-}
-
-.hidden { display: none !important; }
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 20px;
-  margin-bottom: 32px;
-}
-
-.stat-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 24px;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-}
-
-.stat-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 8px;
-}
-
-.stat-value {
-  font-size: 32px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.stat-card:nth-child(1) .stat-value { color: var(--accent); }
-.stat-card:nth-child(2) .stat-value { color: var(--success); }
-.stat-card:nth-child(3) .stat-value { color: var(--warning); }
-.stat-card:nth-child(4) .stat-value { color: var(--danger); }
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-
-.section-header h2 {
-  font-size: 24px;
-  font-weight: 700;
-}
-
-.form-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 24px;
-  margin-bottom: 24px;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.form-grid.full {
-  grid-template-columns: 1fr;
-}
-
-input, textarea, select {
-  width: 100%;
-  padding: 12px 14px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  color: var(--text);
-  font-size: 14px;
-  font-family: inherit;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-input:focus, textarea:focus, select:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-}
-
-input::placeholder, textarea::placeholder {
-  color: var(--text-muted);
-}
-
-textarea {
-  min-height: 80px;
-  resize: vertical;
-}
-
-.btn {
-  padding: 12px 24px;
-  border: none;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.btn-primary {
-  background: var(--accent);
-  color: white;
-}
-
-.btn-primary:hover {
-  background: var(--accent-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-}
-
-.btn-success {
-  background: var(--success);
-  color: white;
-}
-
-.btn-success:hover {
-  background: #059669;
-}
-
-.btn-danger {
-  background: var(--danger);
-  color: white;
-  padding: 6px 12px;
-  font-size: 12px;
-}
-
-.btn-danger:hover {
-  background: #dc2626;
-}
-
-.table-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  overflow: hidden;
-}
-
-.table-wrap {
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-}
-
-thead {
-  background: rgba(30, 41, 59, 0.8);
-}
-
-th {
-  padding: 14px 16px;
-  text-align: left;
-  font-weight: 600;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-muted);
-  border-bottom: 1px solid var(--border);
-  white-space: nowrap;
-}
-
-td {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border);
-  color: var(--text);
-}
-
-tr:hover td {
-  background: rgba(59, 130, 246, 0.05);
-}
-
-tr:last-child td {
-  border-bottom: none;
-}
-
-.badge {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.badge-active {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--success);
-}
-
-.badge-pending {
-  background: rgba(245, 158, 11, 0.15);
-  color: var(--warning);
-}
-
-.badge-default {
-  background: rgba(148, 163, 184, 0.15);
-  color: var(--text-muted);
-}
-
-.empty-state {
-  text-align: center;
-  padding: 48px;
-  color: var(--text-muted);
-}
-
-.toast {
-  position: fixed;
-  top: 24px;
-  right: 24px;
-  padding: 14px 24px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 500;
-  z-index: 1000;
-  animation: slideIn 0.3s ease;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-}
-
-.toast.success {
-  background: var(--success);
-  color: white;
-}
-
-.toast.error {
-  background: var(--danger);
-  color: white;
-}
-
-@keyframes slideIn {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-
-@media (max-width: 768px) {
-  .sidebar {
-    width: 100%;
-    height: auto;
-    position: relative;
-    flex-direction: row;
-    flex-wrap: wrap;
-    padding: 12px;
-  }
-  .main { margin-left: 0; padding: 16px; }
-  .stats-grid { grid-template-columns: 1fr; }
-}
-
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #475569; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);background:var(--color-background-tertiary);color:var(--color-text-primary);min-height:100vh;display:flex}
+.sidebar{width:220px;flex-shrink:0;background:var(--color-background-primary);border-right:0.5px solid var(--color-border-tertiary);display:flex;flex-direction:column;padding:20px 12px;gap:2px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{display:flex;align-items:center;gap:8px;padding:8px 12px 20px;border-bottom:0.5px solid var(--color-border-tertiary);margin-bottom:8px}
+.logo-icon{width:30px;height:30px;border-radius:8px;background:var(--color-background-info);display:flex;align-items:center;justify-content:center;color:var(--color-text-info)}
+.logo-text{font-size:15px;font-weight:500;color:var(--color-text-primary)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--border-radius-md);font-size:13.5px;color:var(--color-text-secondary);cursor:pointer;transition:all .15s;border:none;background:none;width:100%;text-align:left}
+.nav-item:hover{background:var(--color-background-secondary);color:var(--color-text-primary)}
+.nav-item.active{background:var(--color-background-info);color:var(--color-text-info);font-weight:500}
+.nav-item i{font-size:17px}
+.main{flex:1;min-width:0;padding:28px;overflow-y:auto}
+.hidden{display:none!important}
+.page-header{margin-bottom:24px}
+.page-title{font-size:20px;font-weight:500;color:var(--color-text-primary)}
+.page-sub{font-size:13px;color:var(--color-text-secondary);margin-top:3px}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+.stat-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:18px 20px}
+.stat-label{font-size:12px;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.stat-value{font-size:26px;font-weight:500;color:var(--color-text-primary)}
+.stat-change{font-size:12px;margin-top:4px;color:var(--color-text-success)}
+.form-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:20px;margin-bottom:20px}
+.form-card-title{font-size:14px;font-weight:500;color:var(--color-text-secondary);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:14px}
+.field-wrap{display:flex;flex-direction:column;gap:5px}
+.field-label{font-size:12px;color:var(--color-text-secondary);font-weight:500}
+input,select,textarea{background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);color:var(--color-text-primary);font-size:13.5px;font-family:inherit;padding:8px 11px;width:100%;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--color-border-info);box-shadow:0 0 0 2px rgba(var(--color-info-rgb,59,130,246),.1)}
+input::placeholder,textarea::placeholder{color:var(--color-text-tertiary)}
+textarea{min-height:72px;resize:vertical}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:var(--border-radius-md);font-size:13.5px;font-weight:500;cursor:pointer;transition:all .15s;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit}
+.btn:hover{background:var(--color-background-tertiary)}
+.btn-primary{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)}
+.btn-primary:hover{opacity:.9}
+.btn-success{background:var(--color-background-success);color:var(--color-text-success);border-color:var(--color-border-success)}
+.btn-danger-sm{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:var(--border-radius-md);font-size:12px;font-weight:500;cursor:pointer;border:0.5px solid var(--color-border-danger);background:var(--color-background-danger);color:var(--color-text-danger);font-family:inherit;transition:opacity .15s}
+.btn-danger-sm:hover{opacity:.8}
+.table-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{padding:11px 16px;text-align:left;font-size:11.5px;font-weight:500;text-transform:uppercase;letter-spacing:.5px;color:var(--color-text-secondary);border-bottom:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary);white-space:nowrap}
+tbody td{padding:12px 16px;border-bottom:0.5px solid var(--color-border-tertiary);color:var(--color-text-primary);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--color-background-secondary)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:500}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.7}
+.badge-active{background:var(--color-background-success);color:var(--color-text-success)}
+.badge-pending{background:var(--color-background-warning);color:var(--color-text-warning)}
+.badge-closed{background:var(--color-background-secondary);color:var(--color-text-tertiary)}
+.badge-defaulted{background:var(--color-background-danger);color:var(--color-text-danger)}
+.empty-msg{text-align:center;padding:40px;color:var(--color-text-tertiary);font-size:13px}
+.toast-wrap{position:fixed;top:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:999}
+.toast{padding:11px 18px;border-radius:var(--border-radius-md);font-size:13px;font-weight:500;border:0.5px solid;animation:fadeIn .2s ease;max-width:340px}
+.toast-success{background:var(--color-background-success);color:var(--color-text-success);border-color:var(--color-border-success)}
+.toast-error{background:var(--color-background-danger);color:var(--color-text-danger);border-color:var(--color-border-danger)}
+@keyframes fadeIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+.divider{height:0.5px;background:var(--color-border-tertiary);margin:8px 0}
+.section-actions{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.section-actions h2{font-size:16px;font-weight:500}
 </style>
-<!-- FIX 1: Removed <base target="_blank"> — it was hijacking all SPA navigation
-     links (nav buttons use onclick, not hrefs, so this had no benefit and broke
-     any anchor-based internal links). -->
-</head>
-
-<body>
-
+<h2 class="sr-only">Bank Loan Management System dashboard</h2>
+<div style="display:flex;min-height:100vh">
 <div class="sidebar">
-  <h1>BankLoan</h1>
-  <button class="nav-btn active" onclick="show('dashboard', this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-    Dashboard
-  </button>
-  <button class="nav-btn" onclick="show('borrowers', this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    Borrowers
-  </button>
-  <button class="nav-btn" onclick="show('staff', this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    Staff
-  </button>
-  <button class="nav-btn" onclick="show('loans', this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-    Loans
-  </button>
-  <button class="nav-btn" onclick="show('payments', this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-    Payments
-  </button>
-  <button class="nav-btn" onclick="show('collateral', this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-    Collateral
-  </button>
+  <div class="logo">
+    <div class="logo-icon"><i class="ti ti-building-bank" style="font-size:16px"></i></div>
+    <span class="logo-text">BankLoan</span>
+  </div>
+  <button class="nav-item active" onclick="showPage('dashboard',this)"><i class="ti ti-layout-dashboard"></i>Dashboard</button>
+  <button class="nav-item" onclick="showPage('borrowers',this)"><i class="ti ti-users"></i>Borrowers</button>
+  <button class="nav-item" onclick="showPage('staff',this)"><i class="ti ti-user-check"></i>Staff</button>
+  <button class="nav-item" onclick="showPage('loans',this)"><i class="ti ti-receipt-2"></i>Loans</button>
+  <button class="nav-item" onclick="showPage('payments',this)"><i class="ti ti-credit-card"></i>Payments</button>
+  <button class="nav-item" onclick="showPage('collateral',this)"><i class="ti ti-shield-check"></i>Collateral</button>
+  <div style="flex:1"></div>
+  <div class="divider"></div>
+  <div style="padding:10px 12px;font-size:12px;color:var(--color-text-tertiary);display:flex;align-items:center;gap:7px"><i class="ti ti-circle-check" style="font-size:15px;color:var(--color-text-success)"></i>System online</div>
 </div>
+<div style="flex:1;min-width:0;padding:28px;overflow-y:auto">
 
-<div class="main">
-
-<!-- DASHBOARD -->
-<div id="dashboard">
-  <div class="section-header">
-    <h2>Dashboard Overview</h2>
+<div id="page-dashboard">
+  <div class="page-header">
+    <div class="page-title">Dashboard</div>
+    <div class="page-sub">Welcome back — here's your portfolio at a glance</div>
   </div>
   <div class="stats-grid">
     <div class="stat-card">
-      <div class="stat-label">Total Borrowers</div>
+      <div class="stat-label"><i class="ti ti-users" style="font-size:14px;color:var(--color-text-info)"></i>Total borrowers</div>
       <div class="stat-value" id="bCount">0</div>
+      <div class="stat-change">Registered clients</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Active Loans</div>
+      <div class="stat-label"><i class="ti ti-receipt-2" style="font-size:14px;color:var(--color-text-success)"></i>Active loans</div>
       <div class="stat-value" id="lCount">0</div>
+      <div class="stat-change">Currently active</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Portfolio Value</div>
+      <div class="stat-label"><i class="ti ti-chart-pie" style="font-size:14px;color:var(--color-text-warning)"></i>Portfolio value</div>
       <div class="stat-value" id="pTotal">$0</div>
+      <div class="stat-change">Active principal</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Total Collected</div>
+      <div class="stat-label"><i class="ti ti-cash" style="font-size:14px;color:var(--color-text-danger)"></i>Total collected</div>
       <div class="stat-value" id="cTotal">$0</div>
+      <div class="stat-change">All-time payments</div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div class="table-card" style="padding:20px">
+      <div style="font-size:14px;font-weight:500;margin-bottom:14px;display:flex;align-items:center;gap:8px"><i class="ti ti-clock-hour-4" style="font-size:16px;color:var(--color-text-secondary)"></i>Recent activity</div>
+      <div id="recentActivity" style="font-size:13px;color:var(--color-text-secondary)">Loading...</div>
+    </div>
+    <div class="table-card" style="padding:20px">
+      <div style="font-size:14px;font-weight:500;margin-bottom:14px;display:flex;align-items:center;gap:8px"><i class="ti ti-info-circle" style="font-size:16px;color:var(--color-text-secondary)"></i>Quick stats</div>
+      <div id="quickStats" style="font-size:13px;color:var(--color-text-secondary)">Loading...</div>
     </div>
   </div>
 </div>
 
-<!-- BORROWERS -->
-<div id="borrowers" class="hidden">
-  <div class="section-header">
-    <h2>Borrowers</h2>
+<div id="page-borrowers" class="hidden">
+  <div class="section-actions">
+    <h2><i class="ti ti-users" style="font-size:16px;vertical-align:-2px;margin-right:6px"></i>Borrowers</h2>
+    <button class="btn btn-primary" onclick="document.getElementById('borrowerForm').classList.toggle('hidden')"><i class="ti ti-plus"></i>Add borrower</button>
   </div>
-
-  <div class="form-card">
-    <h3 style="font-size:16px; margin-bottom:16px; color:var(--text-muted); font-weight:600;">Add New Borrower</h3>
+  <div id="borrowerForm" class="form-card hidden">
+    <div class="form-card-title"><i class="ti ti-user-plus"></i>New borrower</div>
     <div class="form-grid">
-      <input id="b_name" placeholder="Full Name">
-      <input id="b_email" placeholder="Email Address" type="email">
-      <input id="b_phone" placeholder="Phone Number">
-      <!-- FIX 2: Income uses step="0.01" (decimal dollars — correct).
-           Credit score uses step="1" min="300" max="850" (integer, bounded range). -->
-      <input id="b_income" placeholder="Income Level" type="number" step="0.01" min="0">
-      <input id="b_credit" placeholder="Credit Score (300–850)" type="number" step="1" min="300" max="850">
-      <input id="b_dob" placeholder="Date of Birth" type="date">
+      <div class="field-wrap"><div class="field-label">Full name</div><input id="b_name" placeholder="Jane Smith"></div>
+      <div class="field-wrap"><div class="field-label">Email</div><input id="b_email" type="email" placeholder="jane@example.com"></div>
+      <div class="field-wrap"><div class="field-label">Phone</div><input id="b_phone" placeholder="+1 555 0100"></div>
+      <div class="field-wrap"><div class="field-label">Annual income</div><input id="b_income" type="number" step="0.01" min="0" placeholder="75000"></div>
+      <div class="field-wrap"><div class="field-label">Credit score (300–850)</div><input id="b_credit" type="number" step="1" min="300" max="850" placeholder="720"></div>
+      <div class="field-wrap"><div class="field-label">Date of birth</div><input id="b_dob" type="date"></div>
     </div>
-    <div class="form-grid full">
-      <textarea id="b_address" placeholder="Home Address"></textarea>
+    <div class="field-wrap" style="margin-bottom:14px"><div class="field-label">Home address</div><textarea id="b_address" placeholder="123 Main St, City, State"></textarea></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="addBorrower()"><i class="ti ti-check"></i>Save borrower</button>
+      <button class="btn" onclick="document.getElementById('borrowerForm').classList.add('hidden')">Cancel</button>
     </div>
-    <button class="btn btn-primary" onclick="addBorrower()">+ Add Borrower</button>
   </div>
-
   <div class="table-card">
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th>Income</th>
-            <th>Credit Score</th>
-            <!-- FIX 3: Actions column already present for borrowers — kept. -->
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="borrowerTable">
-          <tr><td colspan="7" class="empty-state">No borrowers found</td></tr>
-        </tbody>
-      </table>
-    </div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Income</th><th>Credit score</th><th></th></tr></thead>
+      <tbody id="borrowerTable"><tr><td colspan="7" class="empty-msg">No borrowers yet</td></tr></tbody>
+    </table></div>
   </div>
 </div>
 
-<!-- STAFF -->
-<div id="staff" class="hidden">
-  <div class="section-header">
-    <h2>Staff Members</h2>
+<div id="page-staff" class="hidden">
+  <div class="section-actions">
+    <h2><i class="ti ti-user-check" style="font-size:16px;vertical-align:-2px;margin-right:6px"></i>Staff</h2>
+    <button class="btn btn-primary" onclick="document.getElementById('staffForm').classList.toggle('hidden')"><i class="ti ti-plus"></i>Add staff</button>
   </div>
-
-  <div class="form-card">
-    <h3 style="font-size:16px; margin-bottom:16px; color:var(--text-muted); font-weight:600;">Add New Staff</h3>
+  <div id="staffForm" class="form-card hidden">
+    <div class="form-card-title"><i class="ti ti-user-plus"></i>New staff member</div>
     <div class="form-grid">
-      <input id="s_name" placeholder="Full Name">
-      <input id="s_role" placeholder="Role">
-      <input id="s_dept" placeholder="Department">
+      <div class="field-wrap"><div class="field-label">Full name</div><input id="s_name" placeholder="Alex Johnson"></div>
+      <div class="field-wrap"><div class="field-label">Role</div><input id="s_role" placeholder="Loan Officer"></div>
+      <div class="field-wrap"><div class="field-label">Department</div><input id="s_dept" placeholder="Retail Banking"></div>
     </div>
-    <button class="btn btn-primary" onclick="addStaff()">+ Add Staff</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="addStaff()"><i class="ti ti-check"></i>Save staff</button>
+      <button class="btn" onclick="document.getElementById('staffForm').classList.add('hidden')">Cancel</button>
+    </div>
   </div>
-
   <div class="table-card">
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <!-- FIX 4: Added Actions column to staff table — was missing while
-               borrowers had one. All entity tables now have consistent delete actions. -->
-          <tr><th>ID</th><th>Name</th><th>Role</th><th>Department</th><th>Actions</th></tr>
-        </thead>
-        <tbody id="staffTable">
-          <tr><td colspan="5" class="empty-state">No staff found</td></tr>
-        </tbody>
-      </table>
-    </div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>ID</th><th>Name</th><th>Role</th><th>Department</th><th></th></tr></thead>
+      <tbody id="staffTable"><tr><td colspan="5" class="empty-msg">No staff yet</td></tr></tbody>
+    </table></div>
   </div>
 </div>
 
-<!-- LOANS -->
-<div id="loans" class="hidden">
-  <div class="section-header">
-    <h2>Loan Management</h2>
+<div id="page-loans" class="hidden">
+  <div class="section-actions">
+    <h2><i class="ti ti-receipt-2" style="font-size:16px;vertical-align:-2px;margin-right:6px"></i>Loans</h2>
+    <button class="btn btn-primary" onclick="document.getElementById('loanForm').classList.toggle('hidden')"><i class="ti ti-plus"></i>New loan</button>
   </div>
-
-  <div class="form-card">
-    <h3 style="font-size:16px; margin-bottom:16px; color:var(--text-muted); font-weight:600;">Create New Loan</h3>
+  <div id="loanForm" class="form-card hidden">
+    <div class="form-card-title"><i class="ti ti-file-invoice"></i>Create loan</div>
     <div class="form-grid">
-      <!-- FIX 5: ID reference fields (borrower_id, staff_id) use step="1" min="1"
-           so decimal IDs like "2.5" are rejected at input level. Same applied to
-           term_months — it must be a whole number. -->
-      <input id="l_bid" placeholder="Borrower ID" type="number" step="1" min="1">
-      <input id="l_sid" placeholder="Staff ID" type="number" step="1" min="1">
-      <input id="l_type" placeholder="Loan Type">
-      <input id="l_amount" placeholder="Principal Amount" type="number" step="0.01" min="0.01">
-      <input id="l_rate" placeholder="Interest Rate (%)" type="number" step="0.01" min="0" max="100">
-      <input id="l_term" placeholder="Term (Months)" type="number" step="1" min="1">
-      <input id="l_start" placeholder="Start Date" type="date">
-      <input id="l_end" placeholder="End Date" type="date">
-      <select id="l_status">
-        <option value="">Select Status</option>
-        <option value="Active">Active</option>
-        <option value="Pending">Pending</option>
-        <option value="Closed">Closed</option>
-        <option value="Defaulted">Defaulted</option>
-      </select>
+      <div class="field-wrap"><div class="field-label">Borrower ID</div><input id="l_bid" type="number" step="1" min="1" placeholder="1"></div>
+      <div class="field-wrap"><div class="field-label">Staff ID</div><input id="l_sid" type="number" step="1" min="1" placeholder="1"></div>
+      <div class="field-wrap"><div class="field-label">Loan type</div><input id="l_type" placeholder="Personal / Mortgage"></div>
+      <div class="field-wrap"><div class="field-label">Principal amount</div><input id="l_amount" type="number" step="0.01" min="0.01" placeholder="50000"></div>
+      <div class="field-wrap"><div class="field-label">Interest rate (%)</div><input id="l_rate" type="number" step="0.01" min="0" max="100" placeholder="5.5"></div>
+      <div class="field-wrap"><div class="field-label">Term (months)</div><input id="l_term" type="number" step="1" min="1" placeholder="36"></div>
+      <div class="field-wrap"><div class="field-label">Start date</div><input id="l_start" type="date"></div>
+      <div class="field-wrap"><div class="field-label">End date</div><input id="l_end" type="date"></div>
+      <div class="field-wrap"><div class="field-label">Status</div>
+        <select id="l_status"><option value="">Select status</option><option value="Active">Active</option><option value="Pending">Pending</option><option value="Closed">Closed</option><option value="Defaulted">Defaulted</option></select>
+      </div>
     </div>
-    <button class="btn btn-primary" onclick="addLoan()">+ Create Loan</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="addLoan()"><i class="ti ti-check"></i>Create loan</button>
+      <button class="btn" onclick="document.getElementById('loanForm').classList.add('hidden')">Cancel</button>
+    </div>
   </div>
-
   <div class="table-card">
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <!-- FIX 6: Added Actions column to loans table for delete consistency. -->
-          <tr><th>Loan ID</th><th>Borrower ID</th><th>Staff ID</th><th>Type</th><th>Amount</th><th>Rate</th><th>Term</th><th>Status</th><th>Actions</th></tr>
-        </thead>
-        <tbody id="loanTable">
-          <tr><td colspan="9" class="empty-state">No loans found</td></tr>
-        </tbody>
-      </table>
-    </div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>Loan ID</th><th>Borrower</th><th>Staff</th><th>Type</th><th>Amount</th><th>Rate</th><th>Term</th><th>Status</th><th></th></tr></thead>
+      <tbody id="loanTable"><tr><td colspan="9" class="empty-msg">No loans yet</td></tr></tbody>
+    </table></div>
   </div>
 </div>
 
-<!-- PAYMENTS -->
-<div id="payments" class="hidden">
-  <div class="section-header">
-    <h2>Payment Records</h2>
+<div id="page-payments" class="hidden">
+  <div class="section-actions">
+    <h2><i class="ti ti-credit-card" style="font-size:16px;vertical-align:-2px;margin-right:6px"></i>Payments</h2>
+    <button class="btn btn-success" onclick="document.getElementById('paymentForm').classList.toggle('hidden')"><i class="ti ti-plus"></i>Record payment</button>
   </div>
-
-  <div class="form-card">
-    <h3 style="font-size:16px; margin-bottom:16px; color:var(--text-muted); font-weight:600;">Record Payment</h3>
+  <div id="paymentForm" class="form-card hidden">
+    <div class="form-card-title"><i class="ti ti-cash"></i>Record payment</div>
     <div class="form-grid">
-      <!-- FIX 7: Loan ID field uses step="1" min="1" — IDs must be positive integers. -->
-      <input id="p_loan" placeholder="Loan ID" type="number" step="1" min="1">
-      <input id="p_amount" placeholder="Amount Paid" type="number" step="0.01" min="0.01">
-      <input id="p_date" placeholder="Payment Date" type="date">
-      <select id="p_method">
-        <option value="">Payment Method</option>
-        <option value="Bank Transfer">Bank Transfer</option>
-        <option value="Cash">Cash</option>
-        <option value="Check">Check</option>
-        <option value="Card">Card</option>
-      </select>
-      <!-- FIX 8: Late fee defaults to 0 and min="0" — negative fees make no sense. -->
-      <input id="p_fee" placeholder="Late Fee" type="number" step="0.01" min="0" value="0">
+      <div class="field-wrap"><div class="field-label">Loan ID</div><input id="p_loan" type="number" step="1" min="1" placeholder="1"></div>
+      <div class="field-wrap"><div class="field-label">Amount paid</div><input id="p_amount" type="number" step="0.01" min="0.01" placeholder="1500.00"></div>
+      <div class="field-wrap"><div class="field-label">Payment date</div><input id="p_date" type="date"></div>
+      <div class="field-wrap"><div class="field-label">Payment method</div>
+        <select id="p_method"><option value="">Select method</option><option value="Bank Transfer">Bank Transfer</option><option value="Cash">Cash</option><option value="Check">Check</option><option value="Card">Card</option></select>
+      </div>
+      <div class="field-wrap"><div class="field-label">Late fee</div><input id="p_fee" type="number" step="0.01" min="0" value="0"></div>
     </div>
-    <button class="btn btn-success" onclick="addPayment()">✓ Record Payment</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-success" onclick="addPayment()"><i class="ti ti-check"></i>Record payment</button>
+      <button class="btn" onclick="document.getElementById('paymentForm').classList.add('hidden')">Cancel</button>
+    </div>
   </div>
-
   <div class="table-card">
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>Payment ID</th><th>Loan ID</th><th>Amount</th><th>Date</th><th>Method</th><th>Late Fee</th></tr>
-        </thead>
-        <tbody id="paymentTable">
-          <tr><td colspan="6" class="empty-state">No payments found</td></tr>
-        </tbody>
-      </table>
-    </div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>Payment ID</th><th>Loan ID</th><th>Amount</th><th>Date</th><th>Method</th><th>Late fee</th></tr></thead>
+      <tbody id="paymentTable"><tr><td colspan="6" class="empty-msg">No payments yet</td></tr></tbody>
+    </table></div>
   </div>
 </div>
 
-<!-- COLLATERAL -->
-<div id="collateral" class="hidden">
-  <div class="section-header">
-    <h2>Collateral Assets</h2>
+<div id="page-collateral" class="hidden">
+  <div class="section-actions">
+    <h2><i class="ti ti-shield-check" style="font-size:16px;vertical-align:-2px;margin-right:6px"></i>Collateral</h2>
+    <button class="btn btn-primary" onclick="document.getElementById('collateralForm').classList.toggle('hidden')"><i class="ti ti-plus"></i>Register asset</button>
   </div>
-
-  <div class="form-card">
-    <h3 style="font-size:16px; margin-bottom:16px; color:var(--text-muted); font-weight:600;">Register Collateral</h3>
+  <div id="collateralForm" class="form-card hidden">
+    <div class="form-card-title"><i class="ti ti-home-2"></i>Register collateral</div>
     <div class="form-grid">
-      <!-- FIX 9: Loan ID field uses step="1" min="1" for integer-only IDs. -->
-      <input id="c_loan" placeholder="Loan ID" type="number" step="1" min="1">
-      <input id="c_type" placeholder="Asset Type">
-      <!-- FIX 10: Market value min="0.01" — zero or negative asset value is invalid. -->
-      <input id="c_value" placeholder="Market Value" type="number" step="0.01" min="0.01">
+      <div class="field-wrap"><div class="field-label">Loan ID</div><input id="c_loan" type="number" step="1" min="1" placeholder="1"></div>
+      <div class="field-wrap"><div class="field-label">Asset type</div><input id="c_type" placeholder="Real Estate / Vehicle"></div>
+      <div class="field-wrap"><div class="field-label">Market value</div><input id="c_value" type="number" step="0.01" min="0.01" placeholder="200000"></div>
     </div>
-    <div class="form-grid full">
-      <textarea id="c_desc" placeholder="Asset Description"></textarea>
+    <div class="field-wrap" style="margin-bottom:14px"><div class="field-label">Asset description</div><textarea id="c_desc" placeholder="Describe the collateral asset..."></textarea></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="addCollateral()"><i class="ti ti-check"></i>Register</button>
+      <button class="btn" onclick="document.getElementById('collateralForm').classList.add('hidden')">Cancel</button>
     </div>
-    <button class="btn btn-primary" onclick="addCollateral()">+ Register Collateral</button>
   </div>
-
   <div class="table-card">
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>ID</th><th>Loan ID</th><th>Asset Type</th><th>Value</th><th>Description</th></tr>
-        </thead>
-        <tbody id="collateralTable">
-          <tr><td colspan="5" class="empty-state">No collateral found</td></tr>
-        </tbody>
-      </table>
-    </div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>ID</th><th>Loan ID</th><th>Asset type</th><th>Value</th><th>Description</th></tr></thead>
+      <tbody id="collateralTable"><tr><td colspan="5" class="empty-msg">No collateral yet</td></tr></tbody>
+    </table></div>
   </div>
 </div>
 
 </div>
+</div>
+<div class="toast-wrap" id="toastWrap"></div>
 
 <script>
-function show(id, btn) {
-  document.querySelectorAll('.main > div').forEach(d => d.classList.add('hidden'));
-  document.getElementById(id).classList.remove('hidden');
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
+function showPage(id,btn){
+  document.querySelectorAll('[id^="page-"]').forEach(d=>d.classList.add('hidden'));
+  document.getElementById('page-'+id).classList.remove('hidden');
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
 }
-
-function toast(msg, type='success') {
-  const el = document.createElement('div');
-  el.className = 'toast ' + type;
-  if (msg.includes('\n')) {
-    el.innerHTML = '<strong>Validation Errors:</strong><br>' + msg.split('\n').map(m => '• ' + m).join('<br>');
-    el.style.maxWidth = '400px';
-    el.style.lineHeight = '1.6';
-  } else {
-    el.textContent = msg;
-  }
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), type === 'error' ? 5000 : 3000);
+function toast(msg,type='success'){
+  const wrap=document.getElementById('toastWrap');
+  const el=document.createElement('div');
+  el.className='toast toast-'+(type==='success'?'success':'error');
+  el.textContent=msg;
+  wrap.appendChild(el);
+  setTimeout(()=>el.remove(),3500);
 }
+const api=(url,opts={})=>fetch(url,{headers:{"Content-Type":"application/json"},...opts}).then(async r=>{
+  const d=await r.json().catch(()=>null);
+  if(!r.ok){if(r.status===400&&d?.details)throw new Error(d.details.join('\n'));throw new Error(d?.error||r.statusText);}
+  if(d?.error)throw new Error(d.error);
+  return d;
+});
+const val=v=>v??'—';
+const fmtMoney=v=>{const n=Number(v);return isNaN(n)?'$0':'$'+n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})};
+const fmtK=v=>{const n=Number(v);if(isNaN(n))return'$0';return n>=1e6?'$'+(n/1e6).toFixed(1)+'M':n>=1e3?'$'+(n/1e3).toFixed(0)+'K':fmtMoney(v)};
+function initials(name){return(name||'').split(' ').map(w=>w[0]||'').slice(0,2).join('').toUpperCase()||'?'}
+const colors=['var(--color-background-info)','var(--color-background-success)','var(--color-background-warning)','var(--color-background-danger)'];
+const tcols=['var(--color-text-info)','var(--color-text-success)','var(--color-text-warning)','var(--color-text-danger)'];
 
-const api = (url, options = {}) =>
-  fetch(url, {
-    headers: { "Content-Type": "application/json" },
-    ...options
-  }).then(async r => {
-    const data = await r.json().catch(() => null);
-    if (!r.ok) {
-      if (r.status === 400 && data?.details) {
-        throw new Error(data.details.join('\n'));
-      }
-      throw new Error(data?.error || r.statusText);
-    }
-    if (data?.error) throw new Error(data.error);
-    return data;
-  });
-
-const val = (v) => v ?? "—";
-const fmtMoney = (v) => {
-  const n = Number(v);
-  return isNaN(n) ? '$0' : '$' + n.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-};
-
-// ================= STATS =================
-async function loadStats() {
-  try {
-    const d = await api('/api/stats');
-    document.getElementById('bCount').innerText = d.borrowers || 0;
-    document.getElementById('lCount').innerText = d.loans || 0;
-    document.getElementById('pTotal').innerText = fmtMoney(d.active_portfolio);
-    document.getElementById('cTotal').innerText = fmtMoney(d.total_collected);
-  } catch(e) {
-    console.log('Stats load failed:', e.message);
-  }
+async function loadStats(){
+  try{
+    const d=await api('/api/stats');
+    document.getElementById('bCount').textContent=d.borrowers||0;
+    document.getElementById('lCount').textContent=d.loans||0;
+    document.getElementById('pTotal').textContent=fmtK(d.active_portfolio);
+    document.getElementById('cTotal').textContent=fmtK(d.total_collected);
+    document.getElementById('quickStats').innerHTML=`
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--color-border-tertiary)"><span>Active portfolio</span><span style="font-weight:500;color:var(--color-text-primary)">${fmtMoney(d.active_portfolio)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--color-border-tertiary)"><span>Total collected</span><span style="font-weight:500;color:var(--color-text-success)">${fmtMoney(d.total_collected)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0"><span>Borrowers on file</span><span style="font-weight:500;color:var(--color-text-primary)">${d.borrowers||0}</span></div>
+      </div>`;
+    document.getElementById('recentActivity').innerHTML=`<div style="color:var(--color-text-tertiary);text-align:center;padding:20px 0"><i class="ti ti-clock" style="font-size:28px;display:block;margin-bottom:8px;opacity:.4"></i>Connect your backend to see activity</div>`;
+  }catch(e){console.log('Stats:',e.message)}
 }
-
-// ================= BORROWERS =================
-async function loadBorrowers() {
-  try {
-    const data = await api('/api/borrowers');
-    const tbody = document.getElementById('borrowerTable');
-    if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No borrowers found</td></tr>';
-      return;
-    }
-    tbody.innerHTML = data.map(b => `
-      <tr>
-        <td>${val(b.borrower_id)}</td>
-        <td><strong>${val(b.full_name)}</strong></td>
-        <td>${val(b.email_address)}</td>
-        <td>${val(b.phone_number)}</td>
-        <td>${fmtMoney(b.income_level)}</td>
-        <td>${val(b.credit_score)}</td>
-        <td><button class="btn btn-danger" onclick="deleteBorrower(${b.borrower_id})">Delete</button></td>
-      </tr>
-    `).join('');
-  } catch(e) {
-    document.getElementById('borrowerTable').innerHTML = '<tr><td colspan="7" class="empty-state">Error loading borrowers</td></tr>';
-  }
+async function loadBorrowers(){
+  try{
+    const data=await api('/api/borrowers');
+    const tb=document.getElementById('borrowerTable');
+    if(!data||!data.length){tb.innerHTML='<tr><td colspan="7" class="empty-msg">No borrowers yet — add one above</td></tr>';return;}
+    tb.innerHTML=data.map((b,i)=>`<tr>
+      <td style="color:var(--color-text-tertiary);font-size:12px">#${val(b.borrower_id)}</td>
+      <td><div style="display:flex;align-items:center;gap:9px">
+        <div style="width:28px;height:28px;border-radius:50%;background:${colors[i%4]};color:${tcols[i%4]};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0">${initials(b.full_name)}</div>
+        <span style="font-weight:500">${val(b.full_name)}</span></div></td>
+      <td style="color:var(--color-text-secondary)">${val(b.email_address)}</td>
+      <td style="color:var(--color-text-secondary)">${val(b.phone_number)}</td>
+      <td>${fmtMoney(b.income_level)}</td>
+      <td><span style="font-size:12px;padding:3px 9px;border-radius:20px;background:var(--color-background-info);color:var(--color-text-info)">${val(b.credit_score)}</span></td>
+      <td><button class="btn-danger-sm" onclick="deleteBorrower(${b.borrower_id})"><i class="ti ti-trash" style="font-size:12px"></i>Delete</button></td>
+    </tr>`).join('');
+  }catch(e){document.getElementById('borrowerTable').innerHTML='<tr><td colspan="7" class="empty-msg">Could not load borrowers</td></tr>'}
 }
-
-async function addBorrower() {
-  try {
-    await api('/api/borrowers', {
-      method: 'POST',
-      body: JSON.stringify({
-        full_name: b_name.value,
-        email_address: b_email.value,
-        phone_number: b_phone.value,
-        home_address: b_address.value,
-        date_of_birth: b_dob.value,
-        income_level: Number(b_income.value) || 0,
-        credit_score: Number(b_credit.value) || 0
-      })
-    });
-    [b_name, b_email, b_phone, b_income, b_credit, b_dob, b_address].forEach(i => i.value = '');
-    toast('Borrower added successfully');
-    loadBorrowers();
-    loadStats();
-  } catch(e) {
-    toast('Error: ' + e.message, 'error');
-  }
+async function addBorrower(){
+  try{
+    await api('/api/borrowers',{method:'POST',body:JSON.stringify({full_name:b_name.value,email_address:b_email.value,phone_number:b_phone.value,home_address:b_address.value,date_of_birth:b_dob.value,income_level:Number(b_income.value)||0,credit_score:Number(b_credit.value)||0})});
+    [b_name,b_email,b_phone,b_income,b_credit,b_dob,b_address].forEach(i=>i.value='');
+    document.getElementById('borrowerForm').classList.add('hidden');
+    toast('Borrower added');loadBorrowers();loadStats();
+  }catch(e){toast(e.message,'error')}
 }
-
-async function deleteBorrower(id) {
-  if (!confirm('Delete borrower #' + id + '?')) return;
-  try {
-    await api('/api/borrowers/' + id, { method: 'DELETE' });
-    toast('Borrower deleted');
-    loadBorrowers();
-    loadStats();
-  } catch(e) {
-    toast('Error: ' + e.message, 'error');
-  }
+async function deleteBorrower(id){
+  if(!confirm('Delete borrower #'+id+'?'))return;
+  try{await api('/api/borrowers/'+id,{method:'DELETE'});toast('Borrower deleted');loadBorrowers();loadStats();}catch(e){toast(e.message,'error')}
 }
-
-// ================= STAFF =================
-async function loadStaff() {
-  try {
-    const data = await api('/api/staff');
-    const tbody = document.getElementById('staffTable');
-    if (!data || data.length === 0) {
-      // FIX 4 (cont.): colspan updated from 4 to 5 to match new Actions column.
-      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No staff found</td></tr>';
-      return;
-    }
-    // FIX 4 (cont.): Delete button rendered for each staff row.
-    tbody.innerHTML = data.map(s => `
-      <tr>
-        <td>${val(s.staff_id)}</td>
-        <td><strong>${val(s.staff_name)}</strong></td>
-        <td><span class="badge badge-default">${val(s.role)}</span></td>
-        <td>${val(s.department)}</td>
-        <td><button class="btn btn-danger" onclick="deleteStaff(${s.staff_id})">Delete</button></td>
-      </tr>
-    `).join('');
-  } catch(e) {
-    document.getElementById('staffTable').innerHTML = '<tr><td colspan="5" class="empty-state">Error loading staff</td></tr>';
-  }
+async function loadStaff(){
+  try{
+    const data=await api('/api/staff');
+    const tb=document.getElementById('staffTable');
+    if(!data||!data.length){tb.innerHTML='<tr><td colspan="5" class="empty-msg">No staff yet</td></tr>';return;}
+    tb.innerHTML=data.map((s,i)=>`<tr>
+      <td style="color:var(--color-text-tertiary);font-size:12px">#${val(s.staff_id)}</td>
+      <td><div style="display:flex;align-items:center;gap:9px">
+        <div style="width:28px;height:28px;border-radius:50%;background:${colors[i%4]};color:${tcols[i%4]};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0">${initials(s.staff_name)}</div>
+        <span style="font-weight:500">${val(s.staff_name)}</span></div></td>
+      <td><span style="font-size:12px;padding:3px 9px;border-radius:20px;background:var(--color-background-secondary);color:var(--color-text-secondary)">${val(s.role)}</span></td>
+      <td style="color:var(--color-text-secondary)">${val(s.department)}</td>
+      <td><button class="btn-danger-sm" onclick="deleteStaff(${s.staff_id})"><i class="ti ti-trash" style="font-size:12px"></i>Delete</button></td>
+    </tr>`).join('');
+  }catch(e){document.getElementById('staffTable').innerHTML='<tr><td colspan="5" class="empty-msg">Could not load staff</td></tr>'}
 }
-
-async function addStaff() {
-  try {
-    await api('/api/staff', {
-      method: 'POST',
-      body: JSON.stringify({
-        staff_name: s_name.value,
-        role: s_role.value,
-        department: s_dept.value
-      })
-    });
-    [s_name, s_role, s_dept].forEach(i => i.value = '');
-    toast('Staff added successfully');
-    loadStaff();
-  } catch(e) {
-    toast('Error: ' + e.message, 'error');
-  }
+async function addStaff(){
+  try{
+    await api('/api/staff',{method:'POST',body:JSON.stringify({staff_name:s_name.value,role:s_role.value,department:s_dept.value})});
+    [s_name,s_role,s_dept].forEach(i=>i.value='');
+    document.getElementById('staffForm').classList.add('hidden');
+    toast('Staff added');loadStaff();
+  }catch(e){toast(e.message,'error')}
 }
-
-// FIX 4 (cont.): deleteStaff function added — previously missing entirely.
-async function deleteStaff(id) {
-  if (!confirm('Delete staff member #' + id + '?')) return;
-  try {
-    await api('/api/staff/' + id, { method: 'DELETE' });
-    toast('Staff member deleted');
-    loadStaff();
-  } catch(e) {
-    toast('Error: ' + e.message, 'error');
-  }
+async function deleteStaff(id){
+  if(!confirm('Delete staff #'+id+'?'))return;
+  try{await api('/api/staff/'+id,{method:'DELETE'});toast('Staff deleted');loadStaff();}catch(e){toast(e.message,'error')}
 }
-
-// ================= LOANS =================
-function getStatusBadge(status) {
-  const s = (status || '').toLowerCase();
-  if (s === 'active') return '<span class="badge badge-active">Active</span>';
-  if (s === 'pending') return '<span class="badge badge-pending">Pending</span>';
-  return '<span class="badge badge-default">' + val(status) + '</span>';
+function statusBadge(s){
+  const m={'active':'badge-active','pending':'badge-pending','closed':'badge-closed','defaulted':'badge-defaulted'};
+  const k=(s||'').toLowerCase();
+  return`<span class="badge ${m[k]||'badge-closed'}">${val(s)}</span>`;
 }
-
-async function loadLoans() {
-  try {
-    const data = await api('/api/loans');
-    const tbody = document.getElementById('loanTable');
-    if (!data || data.length === 0) {
-      // FIX 6 (cont.): colspan updated from 8 to 9 to match new Actions column.
-      tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No loans found</td></tr>';
-      return;
-    }
-    // FIX 6 (cont.): Delete button rendered for each loan row.
-    tbody.innerHTML = data.map(l => `
-      <tr>
-        <td>${val(l.loan_id)}</td>
-        <td>${val(l.borrower_id)}</td>
-        <td>${val(l.staff_id)}</td>
-        <td>${val(l.loan_type)}</td>
-        <td>${fmtMoney(l.principal_amount)}</td>
-        <td>${val(l.interest_rate)}%</td>
-        <td>${val(l.term_months)} mo</td>
-        <td>${getStatusBadge(l.loan_status)}</td>
-        <td><button class="btn btn-danger" onclick="deleteLoan(${l.loan_id})">Delete</button></td>
-      </tr>
-    `).join('');
-  } catch(e) {
-    document.getElementById('loanTable').innerHTML = '<tr><td colspan="9" class="empty-state">Error loading loans</td></tr>';
-  }
+async function loadLoans(){
+  try{
+    const data=await api('/api/loans');
+    const tb=document.getElementById('loanTable');
+    if(!data||!data.length){tb.innerHTML='<tr><td colspan="9" class="empty-msg">No loans yet</td></tr>';return;}
+    tb.innerHTML=data.map(l=>`<tr>
+      <td style="color:var(--color-text-tertiary);font-size:12px">#${val(l.loan_id)}</td>
+      <td>${val(l.borrower_id)}</td><td>${val(l.staff_id)}</td>
+      <td style="color:var(--color-text-secondary)">${val(l.loan_type)}</td>
+      <td style="font-weight:500">${fmtMoney(l.principal_amount)}</td>
+      <td>${val(l.interest_rate)}%</td>
+      <td style="color:var(--color-text-secondary)">${val(l.term_months)} mo</td>
+      <td>${statusBadge(l.loan_status)}</td>
+      <td><button class="btn-danger-sm" onclick="deleteLoan(${l.loan_id})"><i class="ti ti-trash" style="font-size:12px"></i>Delete</button></td>
+    </tr>`).join('');
+  }catch(e){document.getElementById('loanTable').innerHTML='<tr><td colspan="9" class="empty-msg">Could not load loans</td></tr>'}
 }
-
-async function addLoan() {
-  try {
-    await api('/api/loans', {
-      method: 'POST',
-      body: JSON.stringify({
-        borrower_id: Number(l_bid.value) || 0,
-        staff_id: Number(l_sid.value) || 0,
-        loan_type: l_type.value,
-        principal_amount: Number(l_amount.value) || 0,
-        interest_rate: Number(l_rate.value) || 0,
-        term_months: Number(l_term.value) || 0,
-        start_date: l_start.value,
-        end_date: l_end.value,
-        loan_status: l_status.value || 'Active'
-      })
-    });
-    [l_bid, l_sid, l_type, l_amount, l_rate, l_term, l_start, l_end].forEach(i => i.value = '');
-    // FIX 11: l_status is a <select> — reset it to index 0 (the placeholder option)
-    // rather than setting .value = '' which may not deselect reliably across browsers.
-    l_status.selectedIndex = 0;
-    toast('Loan created successfully');
-    loadLoans();
-    loadStats();
-  } catch(e) {
-    toast('Error: ' + e.message, 'error');
-  }
+async function addLoan(){
+  try{
+    await api('/api/loans',{method:'POST',body:JSON.stringify({borrower_id:Number(l_bid.value)||0,staff_id:Number(l_sid.value)||0,loan_type:l_type.value,principal_amount:Number(l_amount.value)||0,interest_rate:Number(l_rate.value)||0,term_months:Number(l_term.value)||0,start_date:l_start.value,end_date:l_end.value,loan_status:l_status.value||'Active'})});
+    [l_bid,l_sid,l_type,l_amount,l_rate,l_term,l_start,l_end].forEach(i=>i.value='');
+    l_status.selectedIndex=0;
+    document.getElementById('loanForm').classList.add('hidden');
+    toast('Loan created');loadLoans();loadStats();
+  }catch(e){toast(e.message,'error')}
 }
-
-// FIX 6 (cont.): deleteLoan function added — previously missing entirely.
-async function deleteLoan(id) {
-  if (!confirm('Delete loan #' + id + '? This will also remove associated payments and collateral.')) return;
-  try {
-    await api('/api/loans/' + id, { method: 'DELETE' });
-    toast('Loan deleted');
-    loadLoans();
-    loadStats();
-  } catch(e) {
-    toast('Error: ' + e.message, 'error');
-  }
+async function deleteLoan(id){
+  if(!confirm('Delete loan #'+id+'? Associated payments and collateral will also be removed.'))return;
+  try{await api('/api/loans/'+id,{method:'DELETE'});toast('Loan deleted');loadLoans();loadStats();}catch(e){toast(e.message,'error')}
 }
-
-// ================= PAYMENTS =================
-async function loadPayments() {
-  try {
-    const data = await api('/api/payments');
-    const tbody = document.getElementById('paymentTable');
-    if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No payments found</td></tr>';
-      return;
-    }
-    tbody.innerHTML = data.map(p => `
-      <tr>
-        <td>${val(p.payment_id)}</td>
-        <td>${val(p.loan_id)}</td>
-        <td style="color:var(--success); font-weight:600;">${fmtMoney(p.amount_paid)}</td>
-        <td>${val(p.payment_date)}</td>
-        <td>${val(p.payment_method)}</td>
-        <td>${fmtMoney(p.late_fee_applied)}</td>
-      </tr>
-    `).join('');
-  } catch(e) {
-    document.getElementById('paymentTable').innerHTML = '<tr><td colspan="6" class="empty-state">Error loading payments</td></tr>';
-  }
+async function loadPayments(){
+  try{
+    const data=await api('/api/payments');
+    const tb=document.getElementById('paymentTable');
+    if(!data||!data.length){tb.innerHTML='<tr><td colspan="6" class="empty-msg">No payments yet</td></tr>';return;}
+    tb.innerHTML=data.map(p=>`<tr>
+      <td style="color:var(--color-text-tertiary);font-size:12px">#${val(p.payment_id)}</td>
+      <td>${val(p.loan_id)}</td>
+      <td style="font-weight:500;color:var(--color-text-success)">${fmtMoney(p.amount_paid)}</td>
+      <td style="color:var(--color-text-secondary)">${val(p.payment_date)}</td>
+      <td><span style="font-size:12px;padding:3px 9px;border-radius:20px;background:var(--color-background-secondary);color:var(--color-text-secondary)">${val(p.payment_method)}</span></td>
+      <td style="color:var(--color-text-warning)">${fmtMoney(p.late_fee_applied)}</td>
+    </tr>`).join('');
+  }catch(e){document.getElementById('paymentTable').innerHTML='<tr><td colspan="6" class="empty-msg">Could not load payments</td></tr>'}
 }
-
-async function addPayment() {
-  try {
-    await api('/api/payments', {
-      method: 'POST',
-      body: JSON.stringify({
-        loan_id: Number(p_loan.value) || 0,
-        amount_paid: Number(p_amount.value) || 0,
-        payment_date: p_date.value,
-        payment_method: p_method.value,
-        late_fee_applied: Number(p_fee.value) || 0
-      })
-    });
-    [p_loan, p_amount, p_date].forEach(i => i.value = '');
-    // FIX 12: p_method is a <select> — reset to index 0, not .value = ''.
-    p_method.selectedIndex = 0;
-    // FIX 8 (cont.): Late fee resets to '0' (its logical default), not '' (blank),
-    // which would render the field empty after submission.
-    p_fee.value = '0';
-    toast('Payment recorded successfully');
-    loadPayments();
-    loadStats();
-  } catch(e) {
-    toast('Error: ' + e.message, 'error');
-  }
+async function addPayment(){
+  try{
+    await api('/api/payments',{method:'POST',body:JSON.stringify({loan_id:Number(p_loan.value)||0,amount_paid:Number(p_amount.value)||0,payment_date:p_date.value,payment_method:p_method.value,late_fee_applied:Number(p_fee.value)||0})});
+    [p_loan,p_amount,p_date].forEach(i=>i.value='');
+    p_method.selectedIndex=0;p_fee.value='0';
+    document.getElementById('paymentForm').classList.add('hidden');
+    toast('Payment recorded');loadPayments();loadStats();
+  }catch(e){toast(e.message,'error')}
 }
-
-// ================= COLLATERAL =================
-async function loadCollateral() {
-  try {
-    const data = await api('/api/collateral');
-    const tbody = document.getElementById('collateralTable');
-    if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No collateral found</td></tr>';
-      return;
-    }
-    tbody.innerHTML = data.map(c => `
-      <tr>
-        <td>${val(c.collateral_id)}</td>
-        <td>${val(c.loan_id)}</td>
-        <td>${val(c.asset_type)}</td>
-        <td>${fmtMoney(c.market_value)}</td>
-        <td style="max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${val(c.asset_description)}</td>
-      </tr>
-    `).join('');
-  } catch(e) {
-    document.getElementById('collateralTable').innerHTML = '<tr><td colspan="5" class="empty-state">Error loading collateral</td></tr>';
-  }
+async function loadCollateral(){
+  try{
+    const data=await api('/api/collateral');
+    const tb=document.getElementById('collateralTable');
+    if(!data||!data.length){tb.innerHTML='<tr><td colspan="5" class="empty-msg">No collateral yet</td></tr>';return;}
+    tb.innerHTML=data.map(c=>`<tr>
+      <td style="color:var(--color-text-tertiary);font-size:12px">#${val(c.collateral_id)}</td>
+      <td>${val(c.loan_id)}</td>
+      <td>${val(c.asset_type)}</td>
+      <td style="font-weight:500">${fmtMoney(c.market_value)}</td>
+      <td style="color:var(--color-text-secondary);max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${val(c.asset_description)}</td>
+    </tr>`).join('');
+  }catch(e){document.getElementById('collateralTable').innerHTML='<tr><td colspan="5" class="empty-msg">Could not load collateral</td></tr>'}
 }
-
-async function addCollateral() {
-  try {
-    await api('/api/collateral', {
-      method: 'POST',
-      body: JSON.stringify({
-        loan_id: Number(c_loan.value) || 0,
-        asset_type: c_type.value,
-        market_value: Number(c_value.value) || 0,
-        asset_description: c_desc.value
-      })
-    });
-    [c_loan, c_type, c_value, c_desc].forEach(i => i.value = '');
-    toast('Collateral registered successfully');
-    loadCollateral();
-  } catch(e) {
-    toast('Error: ' + e.message, 'error');
-  }
+async function addCollateral(){
+  try{
+    await api('/api/collateral',{method:'POST',body:JSON.stringify({loan_id:Number(c_loan.value)||0,asset_type:c_type.value,market_value:Number(c_value.value)||0,asset_description:c_desc.value})});
+    [c_loan,c_type,c_value,c_desc].forEach(i=>i.value='');
+    document.getElementById('collateralForm').classList.add('hidden');
+    toast('Collateral registered');loadCollateral();
+  }catch(e){toast(e.message,'error')}
 }
-
-// INIT
-loadStats();
-loadBorrowers();
-loadStaff();
-loadLoans();
-loadPayments();
-loadCollateral();
+loadStats();loadBorrowers();loadStaff();loadLoans();loadPayments();loadCollateral();
 </script>
-
-</body>
-</html>
